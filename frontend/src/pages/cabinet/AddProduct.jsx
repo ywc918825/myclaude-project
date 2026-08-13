@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { coreApi, resolveUploadUrl } from '../../api/coreApi.js';
-import { searchOpenBeautyFacts, matchKnownIngredients } from '../../api/openBeautyFacts.js';
+import { searchOpenBeautyFacts, matchKnownIngredients, getProductByBarcode } from '../../api/openBeautyFacts.js';
+import BarcodeScanner from './BarcodeScanner.jsx';
 
 const PAO_OPTIONS = [6, 12, 18, 24];
 
@@ -24,7 +25,10 @@ const INGREDIENT_VOCAB = [
 
 // Downscale a captured photo before OCR/upload — phone camera photos can be
 // several MB, which is slow to run OCR on and needlessly large to store.
-function resizeImageToDataUrl(file, maxDim = 1400) {
+// maxDim defaults fairly high (vs. a typical thumbnail size) because OCR
+// accuracy on small printed ingredient-list text drops off fast once the
+// text itself shrinks below a few pixels tall.
+function resizeImageToDataUrl(file, maxDim = 2000) {
   return new Promise((resolve, reject) => {
     const img = new Image();
     const reader = new FileReader();
@@ -46,17 +50,47 @@ function resizeImageToDataUrl(file, maxDim = 1400) {
   });
 }
 
+// Symbols that essentially never appear in a real product name but show up
+// constantly in OCR misreads of stylized logos/cursive labels/reflections —
+// lines containing them are almost certainly noise, not a product name.
+const OCR_NOISE_CHARS = /[=:><\\|{}[\]~^`：《》『』""'']/;
+
 // OCR gives us a blob of raw text with no notion of "this is the product
-// name" — as a simple stand-in, guess the name is the longest line that
-// isn't just digits/punctuation. It's a starting point for the user to
-// correct, not a claim of accuracy.
+// name" — as a simple stand-in, guess the name is the longest line that (a)
+// isn't dominated by digits/punctuation, (b) doesn't contain characters that
+// only ever show up as recognition noise, and (c) is long enough to plausibly
+// be a name rather than a 1-2 character misread fragment. This filters out
+// the worst garbage but can't catch every misread (e.g. real letters that
+// spell nonsense) — it's a starting point for the user to correct via the
+// "查看识别到的文字" raw text, not a claim of accuracy. Recognition quality
+// depends heavily on photo quality: flat printed text (like an ingredients
+// list) reads far better than a curved bottle or a cursive brand logo.
 export function guessNameFromText(text) {
   const lines = text
     .split('\n')
     .map((l) => l.trim())
-    .filter((l) => l.replace(/[\s\d.,:;!?%()-]/g, '').length >= 2);
+    .filter((l) => l.replace(/[\s\d.,:;!?%()-]/g, '').length >= 2)
+    .filter((l) => !OCR_NOISE_CHARS.test(l))
+    // Chinese product names can legitimately be very short ("水乳", "面霜"),
+    // but a short ALL-Latin fragment ("a LL") is almost always a misread —
+    // so only Latin/digit-only lines need to clear a higher length bar.
+    .filter((l) => (/[一-鿿]/.test(l) ? l.length >= 2 : l.length >= 5))
+    .filter((l) => {
+      const wordChars = (l.match(/[\p{L}\p{N}]/gu) || []).length;
+      return wordChars / l.length >= 0.7;
+    });
   if (lines.length === 0) return '';
   return lines.reduce((longest, l) => (l.length > longest.length ? l : longest), lines[0]);
+}
+
+// A bare "Failed to fetch" almost always means the request never left the
+// browser (DNS/network/firewall), not that the API responded with an error —
+// Open Beauty Facts is hosted outside mainland China, so this is the most
+// common cause for users without direct access to it.
+function describeFetchError(err) {
+  return err.message === 'Failed to fetch'
+    ? '连接不上 Open Beauty Facts（world.openbeautyfacts.org）。这个网站在境内可能需要科学上网才能访问，可以在手机浏览器里直接打开这个网址确认是否能连通；连不上的话可以先手动填写产品信息。'
+    : err.message;
 }
 
 function todayStr() {
@@ -89,16 +123,27 @@ function productToForm(product) {
   };
 }
 
-// Props: { editingProduct?: Product, onSaved: () => void, onCancel?: () => void }
+// Props: { editingProduct?: Product, onSaved: () => void, onCancel?: () => void, onProductAdded?: () => void }
 // Pass a `key` tied to editingProduct?.id from the parent so this component
 // remounts (and re-derives its initial state) whenever the edit target changes.
-export default function AddProduct({ editingProduct, onSaved, onCancel }) {
+// In create mode, saving does NOT navigate away — it stays on this form so a
+// whole shelf of products can be entered in one sitting (scan -> save -> scan
+// next); onProductAdded fires after each save so the parent can mark the
+// cabinet list stale. onSaved is reserved for edit-mode saves and for the
+// explicit "完成" button once the user is done adding.
+export default function AddProduct({ editingProduct, onSaved, onCancel, onProductAdded }) {
   const isEditMode = Boolean(editingProduct);
 
   const [categories, setCategories] = useState([]);
   const [form, setForm] = useState(() => (editingProduct ? productToForm(editingProduct) : initialForm));
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
+  const [savedCount, setSavedCount] = useState(0);
+
+  const [scannerOpen, setScannerOpen] = useState(false);
+  const [barcodeStatus, setBarcodeStatus] = useState('idle'); // idle | looking | applied | notfound | error
+  const [barcodeError, setBarcodeError] = useState('');
+  const [barcodeApplied, setBarcodeApplied] = useState(null); // { name, ingredientsText, matchedTags }
 
   const fileInputRef = useRef(null);
   // local dataURL for a freshly-picked photo, or the resolved URL of the
@@ -231,7 +276,7 @@ export default function AddProduct({ editingProduct, onSaved, onCancel }) {
       setLookupStatus(results.length ? 'results' : 'empty');
     } catch (err) {
       setLookupStatus('error');
-      setLookupError(err.message);
+      setLookupError(describeFetchError(err));
     }
   };
 
@@ -251,6 +296,41 @@ export default function AddProduct({ editingProduct, onSaved, onCancel }) {
     });
     setLookupStatus('idle');
     setLookupResults([]);
+  };
+
+  const handleBarcodeDetected = async (barcode) => {
+    setScannerOpen(false);
+    setError('');
+    setBarcodeStatus('looking');
+    setBarcodeError('');
+    setBarcodeApplied(null);
+
+    try {
+      const product = await getProductByBarcode(barcode);
+      if (!product) {
+        setBarcodeStatus('notfound');
+        return;
+      }
+
+      // A barcode match is an exact lookup (unlike the fuzzy text search
+      // above), so it's trustworthy enough to prefill the name too.
+      const matchedTags = matchKnownIngredients(product.ingredients_text, product.ingredients_text_zh, INGREDIENT_VOCAB);
+      setForm((f) => ({
+        ...f,
+        name: f.name.trim() ? f.name : product.product_name || f.name,
+        brand: f.brand.trim() ? f.brand : product.brands || f.brand,
+        ingredientTags: Array.from(new Set([...f.ingredientTags, ...matchedTags]))
+      }));
+      setBarcodeApplied({
+        name: product.product_name,
+        ingredientsText: product.ingredients_text_zh || product.ingredients_text || '',
+        matchedTags
+      });
+      setBarcodeStatus('applied');
+    } catch (err) {
+      setBarcodeStatus('error');
+      setBarcodeError(describeFetchError(err));
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -281,15 +361,24 @@ export default function AddProduct({ editingProduct, onSaved, onCancel }) {
     try {
       if (isEditMode) {
         await coreApi.updateProduct(editingProduct.id, payload);
+        onSaved && onSaved();
       } else {
         await coreApi.createProduct(payload);
+        // Stay on this form instead of navigating away — entering a whole
+        // shelf of products in one sitting means avoiding a round-trip to
+        // the cabinet tab after every single item.
         setForm({ ...initialForm, category: categories[0] || '' });
         handleClearPhoto();
         setLookupStatus('idle');
         setLookupResults([]);
         setAppliedResult(null);
+        setBarcodeStatus('idle');
+        setBarcodeError('');
+        setBarcodeApplied(null);
+        setSavedCount((c) => c + 1);
+        onProductAdded && onProductAdded();
+        window.scrollTo({ top: 0, behavior: 'smooth' });
       }
-      onSaved && onSaved();
     } catch (err) {
       setError(`${isEditMode ? '保存修改' : '创建'}失败：${err.message}`);
     } finally {
@@ -312,10 +401,75 @@ export default function AddProduct({ editingProduct, onSaved, onCancel }) {
         )}
       </div>
 
+      {!isEditMode && savedCount > 0 && (
+        <div className="card" style={{ background: 'var(--pink-100)', border: 'none', marginBottom: 12, padding: 10 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 13 }}>
+            <span className="status-ok">✓ 已连续添加 {savedCount} 件，可以继续扫码/拍照添加下一件</span>
+            <button
+              type="button"
+              className="btn-primary"
+              style={{ width: 'auto', padding: '6px 14px', fontSize: 13 }}
+              onClick={() => onSaved && onSaved()}
+            >
+              完成 →
+            </button>
+          </div>
+        </div>
+      )}
+
       {error && (
         <div className="status-expired" style={{ marginBottom: 12, fontSize: 13 }}>
           {error}
         </div>
+      )}
+
+      <div className="field">
+        <label>扫条码（推荐，最快最准）</label>
+        <button
+          type="button"
+          className="btn-primary"
+          onClick={() => {
+            setScannerOpen(true);
+            setBarcodeStatus('idle');
+            setBarcodeError('');
+            setBarcodeApplied(null);
+          }}
+        >
+          {barcodeStatus === 'looking' ? '查询中…' : '📷 扫外包装条码'}
+        </button>
+
+        {barcodeStatus === 'notfound' && (
+          <div className="empty-state" style={{ padding: '8px 0' }}>
+            这个条码没有在 Open Beauty Facts 数据库里找到，可以拍照识别或手动填写
+          </div>
+        )}
+        {barcodeStatus === 'error' && (
+          <div className="status-expired" style={{ fontSize: 13, marginTop: 6 }}>
+            查询失败：{barcodeError}
+          </div>
+        )}
+        {barcodeApplied && (
+          <div className="card" style={{ marginTop: 8, padding: 10, fontSize: 13 }}>
+            <div className="status-ok">
+              条码精确匹配到「{barcodeApplied.name}」，已带入产品名称、品牌
+              {barcodeApplied.matchedTags.length > 0 ? `和 ${barcodeApplied.matchedTags.length} 个已知成分标签` : ''}
+              ，请核对
+            </div>
+            {barcodeApplied.ingredientsText && (
+              <details style={{ marginTop: 4 }}>
+                <summary style={{ cursor: 'pointer', color: 'var(--muted)' }}>查看完整成分表原文</summary>
+                <div style={{ whiteSpace: 'pre-wrap', color: 'var(--muted)', marginTop: 4 }}>
+                  {barcodeApplied.ingredientsText}
+                </div>
+              </details>
+            )}
+            <div style={{ fontSize: 12, color: 'var(--muted)', marginTop: 4 }}>数据来源：Open Beauty Facts</div>
+          </div>
+        )}
+      </div>
+
+      {scannerOpen && (
+        <BarcodeScanner onDetected={handleBarcodeDetected} onClose={() => setScannerOpen(false)} />
       )}
 
       <div className="field">
@@ -330,14 +484,19 @@ export default function AddProduct({ editingProduct, onSaved, onCancel }) {
         />
 
         {!photoPreview && (
-          <button
-            type="button"
-            className="btn-primary"
-            style={{ background: 'white', color: 'var(--pink-500)', border: '1px solid var(--pink-400)' }}
-            onClick={() => fileInputRef.current && fileInputRef.current.click()}
-          >
-            📷 拍照 / 上传产品照片
-          </button>
+          <>
+            <button
+              type="button"
+              className="btn-primary"
+              style={{ background: 'white', color: 'var(--pink-500)', border: '1px solid var(--pink-400)' }}
+              onClick={() => fileInputRef.current && fileInputRef.current.click()}
+            >
+              📷 拍照 / 上传产品照片
+            </button>
+            <div style={{ fontSize: 12, color: 'var(--muted)', marginTop: 6 }}>
+              拍摄小贴士：正对文字、光线充足、离近一点让文字占满画面，识别效果会好很多；瓶身曲面反光的艺术字logo通常很难识别准确，尽量拍外包装上的印刷文字（比如成分表）。
+            </div>
+          </>
         )}
 
         {photoPreview && (

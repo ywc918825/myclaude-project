@@ -51,6 +51,7 @@ export default function App() {
               setEditingProduct(null);
               setTab('cabinet');
             }}
+            onProductAdded={bumpRefresh}
           />
         )}
         {tab === 'reminder' && <ReminderCenter refreshKey={refreshKey} />}
