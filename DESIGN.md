@@ -93,6 +93,14 @@ cd frontend && npm install && npm run dev                # http://localhost:5173
 - 识别只是"猜"产品名称（取识别文本里最长的一行做候选，自动预填 `name` 字段），用户仍需自行核对/修改——这是辅助录入，不是权威数据源。
 - 照片本身通过 `coreApi.uploadImage()` 传给 `POST /api/upload` 落盘，返回的 `url` 存进 `photoUrl`；OCR识别和照片上传是两个独立异步流程，互不阻塞。
 
+## 联网查询产品信息（stage2.5）
+
+- 数据源：[Open Beauty Facts](https://world.openbeautyfacts.org)，开源众包化妆品数据库，免费、无需API Key，`frontend/src/api/openBeautyFacts.js` 直接从浏览器调用其公开搜索接口（`GET /api/v2/search`）。
+- 在添加产品页，填了产品名称或品牌后可点"联网查询产品信息"，按 `品牌+名称` 搜索，展示最多5条候选结果，用户手动点选正确的一条（文本搜索匹配不够精确，不做自动选择/自动填入）。
+- 选中后：品牌字段留空时会带入查到的品牌；成分方面用一份简单的中文成分词表↔英文INCI名对照表（`INCI_MATCH`，见 `openBeautyFacts.js`）在返回的 `ingredients_text`/`ingredients_text_zh` 里做子串匹配，命中的会自动勾选对应成分标签（只做增量勾选，不会取消用户已勾的）。这是粗略匹配，不是精确解析，UI上会注明数据来源并附完整成分表原文供用户自行核对。
+- 已知局限：Open Beauty Facts 以欧美品牌数据为主，国产/小众品牌命中率较低；这是文字搜索而非条码精确查询，后续如果要提升准确率可以加条码扫描（`GET /api/v2/product/{条码}.json`）。
+- 沙盒环境说明：本项目的开发沙盒因出网策略屏蔽了对任意外部域名的访问，无法在沙盒里实测这个接口真实连通；已用 Playwright 拦截请求、按接口真实文档格式mock返回值验证了前端的解析/匹配/填表逻辑，接口连通性需要在有正常公网访问的环境（比如你本地）里验证一次。
+
 ## 原型范围说明
 
 这是 stage1+2 的融合演示版，用于验证产品方向，非最终生产架构：
