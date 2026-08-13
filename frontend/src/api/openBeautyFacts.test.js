@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
-import { searchOpenBeautyFacts, matchKnownIngredients } from './openBeautyFacts.js';
+import { searchOpenBeautyFacts, matchKnownIngredients, getProductByBarcode } from './openBeautyFacts.js';
 
 const VOCAB = ['烟酰胺', '苯氧乙醇', '玻尿酸', '维生素C', '视黄醇(A醇)'];
 
@@ -59,5 +59,40 @@ describe('searchOpenBeautyFacts', () => {
   it('throws a readable error on a non-ok HTTP response', async () => {
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: false, status: 503 }));
     await expect(searchOpenBeautyFacts('snail')).rejects.toThrow('503');
+  });
+});
+
+describe('getProductByBarcode', () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it('returns the product when Open Beauty Facts reports status 1', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => ({ status: 1, product: { product_name: 'Snail Cream', brands: 'COSRX' } })
+      })
+    );
+    const product = await getProductByBarcode('6111234567890');
+    expect(product).toEqual({ product_name: 'Snail Cream', brands: 'COSRX' });
+  });
+
+  it('returns null when the barcode has no match (status 0)', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: true, json: async () => ({ status: 0 }) }));
+    expect(await getProductByBarcode('0000000000000')).toBeNull();
+  });
+
+  it('throws a readable error on a non-ok HTTP response', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: false, status: 500 }));
+    await expect(getProductByBarcode('123')).rejects.toThrow('500');
+  });
+
+  it('URL-encodes the barcode into the request path', async () => {
+    const fetchSpy = vi.fn().mockResolvedValue({ ok: true, json: async () => ({ status: 0 }) });
+    vi.stubGlobal('fetch', fetchSpy);
+    await getProductByBarcode('123 456');
+    expect(fetchSpy.mock.calls[0][0]).toContain('123%20456');
   });
 });
