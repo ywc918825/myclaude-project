@@ -13,14 +13,14 @@ const STATUS_CLASS = {
   expired: 'status-expired'
 };
 
-function daysRemainingText(daysRemaining) {
+export function daysRemainingText(daysRemaining) {
   if (daysRemaining < 0) {
     return `已过期${Math.abs(daysRemaining)}天`;
   }
   return `还有${daysRemaining}天到期`;
 }
 
-function progressPercent(product) {
+export function progressPercent(product) {
   const opened = new Date(product.openedDate);
   const expiry = new Date(product.expiryDate);
   const today = new Date();
@@ -31,9 +31,7 @@ function progressPercent(product) {
   return Math.min(100, Math.max(0, pct));
 }
 
-// STUB — implemented by frontend workflow A per DESIGN.md contract.
-// Props: { refreshKey: number }
-export default function CabinetOverview({ refreshKey }) {
+export default function CabinetOverview({ refreshKey, onEdit }) {
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
   const [activeCategory, setActiveCategory] = useState('全部');
@@ -68,9 +66,10 @@ export default function CabinetOverview({ refreshKey }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [refreshKey]);
 
-  const handleDelete = async (id) => {
+  const handleDelete = async (product) => {
+    if (!window.confirm(`确定删除"${product.name}"吗？此操作不可恢复。`)) return;
     try {
-      await coreApi.deleteProduct(id);
+      await coreApi.deleteProduct(product.id);
       loadProducts();
     } catch (err) {
       setError(`删除失败：${err.message}`);
@@ -170,20 +169,38 @@ export default function CabinetOverview({ refreshKey }) {
             <span className={STATUS_CLASS[product.status] || 'status-ok'} style={{ fontSize: 13 }}>
               {daysRemainingText(product.daysRemaining)}
             </span>
-            <button
-              type="button"
-              onClick={() => handleDelete(product.id)}
-              style={{
-                border: 'none',
-                background: 'none',
-                color: 'var(--muted)',
-                fontSize: 13,
-                cursor: 'pointer',
-                textDecoration: 'underline'
-              }}
-            >
-              删除
-            </button>
+            <div style={{ display: 'flex', gap: 12 }}>
+              <button
+                type="button"
+                onClick={() => onEdit && onEdit(product)}
+                style={{
+                  border: 'none',
+                  background: 'none',
+                  color: 'var(--pink-500)',
+                  fontSize: 13,
+                  cursor: 'pointer',
+                  textDecoration: 'underline',
+                  padding: 0
+                }}
+              >
+                编辑
+              </button>
+              <button
+                type="button"
+                onClick={() => handleDelete(product)}
+                style={{
+                  border: 'none',
+                  background: 'none',
+                  color: 'var(--muted)',
+                  fontSize: 13,
+                  cursor: 'pointer',
+                  textDecoration: 'underline',
+                  padding: 0
+                }}
+              >
+                删除
+              </button>
+            </div>
           </div>
         </div>
       ))}

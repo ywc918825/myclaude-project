@@ -21,7 +21,7 @@ const CATEGORY_COLORS = {
 };
 const FALLBACK_CATEGORY_COLOR = '#b9aab3';
 
-function formatCNY(value) {
+export function formatCNY(value) {
   const n = Number(value) || 0;
   return `¥${Math.round(n)}`;
 }
@@ -31,7 +31,7 @@ function formatCNY(value) {
 //   1) an object map:      { "2026-01": { count, costCNY }, ... }
 //   2) an array of single-key objects: [{ "2026-01": { count, costCNY } }, ...]
 // as well as a flattened array [{ month, count, costCNY }, ...] just in case.
-function normalizeMonthly(monthlyOpened) {
+export function normalizeMonthly(monthlyOpened) {
   if (!monthlyOpened) return [];
 
   if (Array.isArray(monthlyOpened)) {

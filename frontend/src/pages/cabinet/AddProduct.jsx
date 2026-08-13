@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { coreApi } from '../../api/coreApi.js';
+import { coreApi, resolveUploadUrl } from '../../api/coreApi.js';
 import { searchOpenBeautyFacts, matchKnownIngredients } from '../../api/openBeautyFacts.js';
 
 const PAO_OPTIONS = [6, 12, 18, 24];
@@ -50,7 +50,7 @@ function resizeImageToDataUrl(file, maxDim = 1400) {
 // name" — as a simple stand-in, guess the name is the longest line that
 // isn't just digits/punctuation. It's a starting point for the user to
 // correct, not a claim of accuracy.
-function guessNameFromText(text) {
+export function guessNameFromText(text) {
   const lines = text
     .split('\n')
     .map((l) => l.trim())
@@ -77,17 +77,36 @@ const initialForm = {
   costCNY: ''
 };
 
-// STUB — implemented by frontend workflow A per DESIGN.md contract.
-// Props: { onCreated: () => void }
-export default function AddProduct({ onCreated }) {
+function productToForm(product) {
+  return {
+    name: product.name || '',
+    brand: product.brand || '',
+    category: product.category || '',
+    openedDate: product.openedDate || todayStr(),
+    paoMonths: product.paoMonths || 12,
+    ingredientTags: Array.isArray(product.ingredientTags) ? product.ingredientTags : [],
+    costCNY: product.costCNY != null ? String(product.costCNY) : ''
+  };
+}
+
+// Props: { editingProduct?: Product, onSaved: () => void, onCancel?: () => void }
+// Pass a `key` tied to editingProduct?.id from the parent so this component
+// remounts (and re-derives its initial state) whenever the edit target changes.
+export default function AddProduct({ editingProduct, onSaved, onCancel }) {
+  const isEditMode = Boolean(editingProduct);
+
   const [categories, setCategories] = useState([]);
-  const [form, setForm] = useState(initialForm);
+  const [form, setForm] = useState(() => (editingProduct ? productToForm(editingProduct) : initialForm));
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
 
   const fileInputRef = useRef(null);
-  const [photoPreview, setPhotoPreview] = useState(null); // local dataURL, for <img> preview
-  const [photoUrl, setPhotoUrl] = useState(null); // uploaded server URL, saved with the product
+  // local dataURL for a freshly-picked photo, or the resolved URL of the
+  // product's existing photo when opening in edit mode
+  const [photoPreview, setPhotoPreview] = useState(() =>
+    editingProduct?.photoUrl ? resolveUploadUrl(editingProduct.photoUrl) : null
+  );
+  const [photoUrl, setPhotoUrl] = useState(() => editingProduct?.photoUrl || null); // uploaded server URL, saved with the product
   const [photoUploading, setPhotoUploading] = useState(false);
   const [ocrStatus, setOcrStatus] = useState('idle'); // idle | recognizing | done | error
   const [ocrProgress, setOcrProgress] = useState(0);
@@ -247,26 +266,32 @@ export default function AddProduct({ onCreated }) {
       return;
     }
 
+    const payload = {
+      name: form.name.trim(),
+      brand: form.brand.trim(),
+      category: form.category,
+      openedDate: form.openedDate,
+      paoMonths: Number(form.paoMonths),
+      ingredientTags: form.ingredientTags,
+      costCNY: form.costCNY === '' ? 0 : Number(form.costCNY),
+      photoUrl
+    };
+
     setSubmitting(true);
     try {
-      await coreApi.createProduct({
-        name: form.name.trim(),
-        brand: form.brand.trim(),
-        category: form.category,
-        openedDate: form.openedDate,
-        paoMonths: Number(form.paoMonths),
-        ingredientTags: form.ingredientTags,
-        costCNY: form.costCNY === '' ? 0 : Number(form.costCNY),
-        photoUrl
-      });
-      setForm({ ...initialForm, category: categories[0] || '' });
-      handleClearPhoto();
-      setLookupStatus('idle');
-      setLookupResults([]);
-      setAppliedResult(null);
-      onCreated && onCreated();
+      if (isEditMode) {
+        await coreApi.updateProduct(editingProduct.id, payload);
+      } else {
+        await coreApi.createProduct(payload);
+        setForm({ ...initialForm, category: categories[0] || '' });
+        handleClearPhoto();
+        setLookupStatus('idle');
+        setLookupResults([]);
+        setAppliedResult(null);
+      }
+      onSaved && onSaved();
     } catch (err) {
-      setError(`创建失败：${err.message}`);
+      setError(`${isEditMode ? '保存修改' : '创建'}失败：${err.message}`);
     } finally {
       setSubmitting(false);
     }
@@ -274,7 +299,18 @@ export default function AddProduct({ onCreated }) {
 
   return (
     <form className="card" onSubmit={handleSubmit}>
-      <div className="section-title">添加产品</div>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div className="section-title">{isEditMode ? '编辑产品' : '添加产品'}</div>
+        {isEditMode && (
+          <button
+            type="button"
+            onClick={() => onCancel && onCancel()}
+            style={{ border: 'none', background: 'none', color: 'var(--muted)', fontSize: 13, cursor: 'pointer', textDecoration: 'underline' }}
+          >
+            取消
+          </button>
+        )}
+      </div>
 
       {error && (
         <div className="status-expired" style={{ marginBottom: 12, fontSize: 13 }}>
@@ -543,7 +579,7 @@ export default function AddProduct({ onCreated }) {
       </div>
 
       <button type="submit" className="btn-primary" disabled={submitting}>
-        {submitting ? '保存中…' : '保存产品'}
+        {submitting ? '保存中…' : isEditMode ? '保存修改' : '保存产品'}
       </button>
     </form>
   );

@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { coreApi } from '../../api/coreApi';
 import { reminderApi } from '../../api/reminderApi';
+import { isNotificationsEnabled, setNotificationsEnabled, maybeNotify } from '../../notifications.js';
 
-function daysRemainingText(product) {
+export function daysRemainingText(product) {
   if (product.status === 'expired') {
     const overdue = Math.abs(product.daysRemaining);
     return overdue > 0 ? `已过期 ${overdue} 天` : '已过期';
@@ -18,6 +19,37 @@ export default function ReminderCenter({ refreshKey }) {
   const [conflicts, setConflicts] = useState([]);
   const [conflictsLoading, setConflictsLoading] = useState(true);
   const [conflictsError, setConflictsError] = useState(false);
+
+  const notificationSupported = typeof window !== 'undefined' && 'Notification' in window;
+  const [notifyEnabled, setNotifyEnabled] = useState(() => notificationSupported && isNotificationsEnabled());
+  const [notifyPermission, setNotifyPermission] = useState(() =>
+    notificationSupported ? Notification.permission : 'unsupported'
+  );
+
+  const handleEnableNotifications = async () => {
+    if (!notificationSupported) return;
+    const permission = await Notification.requestPermission();
+    setNotifyPermission(permission);
+    if (permission === 'granted') {
+      setNotificationsEnabled(true);
+      setNotifyEnabled(true);
+    }
+  };
+
+  const handleDisableNotifications = () => {
+    setNotificationsEnabled(false);
+    setNotifyEnabled(false);
+  };
+
+  // Fire (at most once/day) once we know how many products need attention.
+  // This only works while the page is open in a browser tab — it is not a
+  // true background push notification (that needs a service worker + push
+  // server, out of scope for this prototype).
+  useEffect(() => {
+    if (!notifyEnabled || notifyPermission !== 'granted' || expiringLoading) return;
+    maybeNotify(expiringProducts.length);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [notifyEnabled, notifyPermission, expiringLoading, expiringProducts.length]);
 
   useEffect(() => {
     let cancelled = false;
@@ -68,6 +100,30 @@ export default function ReminderCenter({ refreshKey }) {
 
   return (
     <div>
+      <div className="card">
+        <div className="section-title">到期提醒通知</div>
+        {!notificationSupported ? (
+          <div className="empty-state">当前浏览器不支持通知</div>
+        ) : notifyPermission === 'denied' ? (
+          <div style={{ fontSize: 13, color: 'var(--muted)' }}>通知权限被拒绝，请在浏览器设置中为此网站开启通知权限</div>
+        ) : notifyEnabled && notifyPermission === 'granted' ? (
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 13 }}>
+            <span className="status-ok">提醒通知已开启（每天最多提醒一次，仅在打开本页面时生效）</span>
+            <button
+              type="button"
+              onClick={handleDisableNotifications}
+              style={{ border: 'none', background: 'none', color: 'var(--muted)', cursor: 'pointer', textDecoration: 'underline', padding: 0 }}
+            >
+              关闭
+            </button>
+          </div>
+        ) : (
+          <button type="button" className="btn-primary" onClick={handleEnableNotifications}>
+            🔔 开启到期提醒通知
+          </button>
+        )}
+      </div>
+
       <div className="card">
         <div className="section-title">即将到期</div>
         {expiringLoading ? (
