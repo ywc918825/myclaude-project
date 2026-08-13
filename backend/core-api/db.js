@@ -1,7 +1,10 @@
 const path = require('path');
-const Database = require('better-sqlite3');
+// Node's built-in SQLite (no native compilation needed — unlike
+// better-sqlite3, which requires a C++ toolchain and fails to install on
+// machines without one, e.g. Windows without Visual Studio Build Tools).
+const { DatabaseSync } = require('node:sqlite');
 
-const db = new Database(path.join(__dirname, 'data.db'));
+const db = new DatabaseSync(path.join(__dirname, 'data.db'));
 
 db.exec(`
   CREATE TABLE IF NOT EXISTS products (
@@ -45,8 +48,9 @@ function seedIfEmpty() {
   `);
 
   const now = new Date().toISOString();
-  const tx = db.transaction((rows) => {
-    for (const r of rows) {
+  db.exec('BEGIN');
+  try {
+    for (const r of seedRows) {
       insert.run({
         ...r,
         ingredientTags: JSON.stringify(r.ingredientTags),
@@ -54,8 +58,11 @@ function seedIfEmpty() {
         createdAt: now
       });
     }
-  });
-  tx(seedRows);
+    db.exec('COMMIT');
+  } catch (err) {
+    db.exec('ROLLBACK');
+    throw err;
+  }
 }
 
 seedIfEmpty();
