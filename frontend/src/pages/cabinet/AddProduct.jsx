@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { coreApi } from '../../api/coreApi.js';
 
 const PAO_OPTIONS = [6, 12, 18, 24];
@@ -20,6 +20,43 @@ const INGREDIENT_VOCAB = [
   '维生素E',
   '甘草酸二钾'
 ];
+
+// Downscale a captured photo before OCR/upload — phone camera photos can be
+// several MB, which is slow to run OCR on and needlessly large to store.
+function resizeImageToDataUrl(file, maxDim = 1400) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    const reader = new FileReader();
+    reader.onerror = () => reject(new Error('读取图片失败'));
+    reader.onload = () => {
+      img.onerror = () => reject(new Error('解析图片失败'));
+      img.onload = () => {
+        const scale = Math.min(1, maxDim / Math.max(img.width, img.height));
+        const canvas = document.createElement('canvas');
+        canvas.width = Math.round(img.width * scale);
+        canvas.height = Math.round(img.height * scale);
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        resolve(canvas.toDataURL('image/jpeg', 0.85));
+      };
+      img.src = reader.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+// OCR gives us a blob of raw text with no notion of "this is the product
+// name" — as a simple stand-in, guess the name is the longest line that
+// isn't just digits/punctuation. It's a starting point for the user to
+// correct, not a claim of accuracy.
+function guessNameFromText(text) {
+  const lines = text
+    .split('\n')
+    .map((l) => l.trim())
+    .filter((l) => l.replace(/[\s\d.,:;!?%()-]/g, '').length >= 2);
+  if (lines.length === 0) return '';
+  return lines.reduce((longest, l) => (l.length > longest.length ? l : longest), lines[0]);
+}
 
 function todayStr() {
   const d = new Date();
@@ -46,6 +83,14 @@ export default function AddProduct({ onCreated }) {
   const [form, setForm] = useState(initialForm);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
+
+  const fileInputRef = useRef(null);
+  const [photoPreview, setPhotoPreview] = useState(null); // local dataURL, for <img> preview
+  const [photoUrl, setPhotoUrl] = useState(null); // uploaded server URL, saved with the product
+  const [photoUploading, setPhotoUploading] = useState(false);
+  const [ocrStatus, setOcrStatus] = useState('idle'); // idle | recognizing | done | error
+  const [ocrProgress, setOcrProgress] = useState(0);
+  const [recognizedText, setRecognizedText] = useState('');
 
   useEffect(() => {
     let cancelled = false;
@@ -80,6 +125,72 @@ export default function AddProduct({ onCreated }) {
     });
   };
 
+  const handlePhotoSelected = async (e) => {
+    const file = e.target.files && e.target.files[0];
+    e.target.value = ''; // allow re-selecting the same file later
+    if (!file) return;
+
+    setError('');
+    setOcrStatus('idle');
+    setOcrProgress(0);
+    setRecognizedText('');
+    setPhotoUrl(null);
+
+    let dataUrl;
+    try {
+      dataUrl = await resizeImageToDataUrl(file);
+    } catch (err) {
+      setError(`处理照片失败：${err.message}`);
+      return;
+    }
+    setPhotoPreview(dataUrl);
+
+    // Upload and OCR run independently — a slow/failed OCR shouldn't block
+    // the photo from being attached to the product.
+    setPhotoUploading(true);
+    coreApi
+      .uploadImage(dataUrl)
+      .then((res) => setPhotoUrl(res.url))
+      .catch((err) => setError(`照片上传失败：${err.message}`))
+      .finally(() => setPhotoUploading(false));
+
+    setOcrStatus('recognizing');
+    try {
+      const { createWorker } = await import('tesseract.js');
+      const worker = await createWorker('chi_sim+eng', 1, {
+        workerPath: '/tesseract-assets/worker.min.js',
+        corePath: '/tesseract-assets/',
+        langPath: '/tesseract-assets/',
+        logger: (m) => {
+          if (m.status === 'recognizing text') {
+            setOcrProgress(Math.round(m.progress * 100));
+          }
+        }
+      });
+      const { data } = await worker.recognize(dataUrl);
+      await worker.terminate();
+
+      setRecognizedText(data.text.trim());
+      setOcrStatus('done');
+
+      const guessedName = guessNameFromText(data.text);
+      if (guessedName) {
+        setForm((f) => (f.name.trim() ? f : { ...f, name: guessedName }));
+      }
+    } catch (err) {
+      setOcrStatus('error');
+      setError(`识别失败：${err.message}（可以手动填写产品信息）`);
+    }
+  };
+
+  const handleClearPhoto = () => {
+    setPhotoPreview(null);
+    setPhotoUrl(null);
+    setOcrStatus('idle');
+    setOcrProgress(0);
+    setRecognizedText('');
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
@@ -103,9 +214,10 @@ export default function AddProduct({ onCreated }) {
         paoMonths: Number(form.paoMonths),
         ingredientTags: form.ingredientTags,
         costCNY: form.costCNY === '' ? 0 : Number(form.costCNY),
-        photoUrl: null
+        photoUrl
       });
       setForm({ ...initialForm, category: categories[0] || '' });
+      handleClearPhoto();
       onCreated && onCreated();
     } catch (err) {
       setError(`创建失败：${err.message}`);
@@ -123,6 +235,82 @@ export default function AddProduct({ onCreated }) {
           {error}
         </div>
       )}
+
+      <div className="field">
+        <label>拍照识别（可选）</label>
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*"
+          capture="environment"
+          onChange={handlePhotoSelected}
+          style={{ display: 'none' }}
+        />
+
+        {!photoPreview && (
+          <button
+            type="button"
+            className="btn-primary"
+            style={{ background: 'white', color: 'var(--pink-500)', border: '1px solid var(--pink-400)' }}
+            onClick={() => fileInputRef.current && fileInputRef.current.click()}
+          >
+            📷 拍照 / 上传产品照片
+          </button>
+        )}
+
+        {photoPreview && (
+          <div className="card" style={{ padding: 10 }}>
+            <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
+              <img
+                src={photoPreview}
+                alt="产品照片预览"
+                style={{ width: 84, height: 84, objectFit: 'cover', borderRadius: 10, flexShrink: 0 }}
+              />
+              <div style={{ flex: 1, fontSize: 13 }}>
+                {photoUploading && <div style={{ color: 'var(--muted)' }}>照片上传中…</div>}
+                {!photoUploading && photoUrl && <div className="status-ok">照片已上传</div>}
+
+                {ocrStatus === 'recognizing' && (
+                  <div style={{ color: 'var(--muted)', marginTop: 4 }}>
+                    识别中 {ocrProgress}%（首次使用需要加载识别模型，稍等一下）
+                  </div>
+                )}
+                {ocrStatus === 'done' && (
+                  <div style={{ marginTop: 4 }}>
+                    <div className="status-ok">识别完成，已尝试填入产品名称，请核对</div>
+                    {recognizedText && (
+                      <details style={{ marginTop: 4 }}>
+                        <summary style={{ cursor: 'pointer', color: 'var(--muted)' }}>查看识别到的文字</summary>
+                        <div style={{ whiteSpace: 'pre-wrap', color: 'var(--muted)', marginTop: 4 }}>
+                          {recognizedText}
+                        </div>
+                      </details>
+                    )}
+                  </div>
+                )}
+                {ocrStatus === 'error' && <div className="status-expired" style={{ marginTop: 4 }}>识别失败，可手动填写</div>}
+
+                <button
+                  type="button"
+                  onClick={handleClearPhoto}
+                  style={{
+                    border: 'none',
+                    background: 'none',
+                    color: 'var(--muted)',
+                    fontSize: 13,
+                    cursor: 'pointer',
+                    textDecoration: 'underline',
+                    marginTop: 6,
+                    padding: 0
+                  }}
+                >
+                  重新拍摄 / 移除照片
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
 
       <div className="field">
         <label htmlFor="name">产品名称</label>

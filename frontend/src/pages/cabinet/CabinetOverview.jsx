@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { coreApi } from '../../api/coreApi.js';
+import { coreApi, resolveUploadUrl } from '../../api/coreApi.js';
 
 const STATUS_VAR = {
   ok: 'var(--ok)',
@@ -122,9 +122,34 @@ export default function CabinetOverview({ refreshKey }) {
       {filtered.map((product) => (
         <div className="card" key={product.id}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-            <div>
-              <div style={{ fontSize: 15, fontWeight: 600 }}>{product.name}</div>
-              <div style={{ fontSize: 13, color: 'var(--muted)' }}>{product.brand}</div>
+            <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+              {product.photoUrl ? (
+                <img
+                  src={resolveUploadUrl(product.photoUrl)}
+                  alt={product.name}
+                  style={{ width: 44, height: 44, objectFit: 'cover', borderRadius: 8, flexShrink: 0 }}
+                />
+              ) : (
+                <div
+                  style={{
+                    width: 44,
+                    height: 44,
+                    borderRadius: 8,
+                    background: 'var(--pink-100)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: 18,
+                    flexShrink: 0
+                  }}
+                >
+                  🧴
+                </div>
+              )}
+              <div>
+                <div style={{ fontSize: 15, fontWeight: 600 }}>{product.name}</div>
+                <div style={{ fontSize: 13, color: 'var(--muted)' }}>{product.brand}</div>
+              </div>
             </div>
             <span className="badge">{product.category}</span>
           </div>

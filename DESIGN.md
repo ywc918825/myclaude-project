@@ -27,7 +27,7 @@ frontend/               # 前端 Vite + React 单页应用（端口 5173）
   paoMonths: number,        // 开封后有效期（月），常见 6/12/18/24
   ingredientTags: string[], // 成分标签，从下方推荐词表中选
   costCNY: number,
-  photoUrl: string | null,  // 原型阶段无需真实上传，允许 null 或占位字符串
+  photoUrl: string | null,  // core-api 静态文件相对路径，如 "/uploads/xxx.jpg"，前端用 resolveUploadUrl() 拼成绝对地址
   createdAt: string,        // ISO datetime
 
   // 以下三个字段由 core-api 在返回时计算好，前端不需要自己算：
@@ -48,6 +48,7 @@ frontend/               # 前端 Vite + React 单页应用（端口 5173）
 - `GET /api/products/:id` → `Product`（不存在返回 404 `{error}`）
 - `PUT /api/products/:id` body 同 POST → 返回更新后的完整 `Product`
 - `DELETE /api/products/:id` → 204 无内容
+- `POST /api/upload` body `{ imageBase64: "data:image/jpeg;base64,..." }` → `{ url: "/uploads/xxx.jpg" }`，图片落盘到 `backend/core-api/uploads/`（已 gitignore），并通过 `/uploads/*` 静态路由对外提供访问
 
 `ingredientTags` 在数据库里以 JSON 字符串存储，API 出入参统一用数组，路由层负责转换。
 
@@ -85,9 +86,15 @@ cd backend/reminder-api && npm install && npm run dev   # http://localhost:4002
 cd frontend && npm install && npm run dev                # http://localhost:5173
 ```
 
+## 拍照识别（stage2）
+
+- 纯客户端 OCR，用 `tesseract.js`（chi_sim+eng），不依赖任何云端OCR API/密钥，识别在浏览器本地完成。
+- worker/wasm核心/语言包不走CDN，而是 `frontend/scripts/copy-tesseract-assets.cjs` 在 `npm install` 后（`postinstall`）自动从 `node_modules` 拷贝到 `public/tesseract-assets/`（已 gitignore，体积约50MB，不进git，每次 `npm install` 自动生成）。
+- 识别只是"猜"产品名称（取识别文本里最长的一行做候选，自动预填 `name` 字段），用户仍需自行核对/修改——这是辅助录入，不是权威数据源。
+- 照片本身通过 `coreApi.uploadImage()` 传给 `POST /api/upload` 落盘，返回的 `url` 存进 `photoUrl`；OCR识别和照片上传是两个独立异步流程，互不阻塞。
+
 ## 原型范围说明
 
 这是 stage1+2 的融合演示版，用于验证产品方向，非最终生产架构：
-- 拍照识别/OCR 不在本原型范围内，`photoUrl` 留空或用占位图即可
 - 成分冲突用规则表匹配，不需要接入AI
 - 数据持久化用 SQLite 单文件，够用即可，不需要额外的用户系统/鉴权
