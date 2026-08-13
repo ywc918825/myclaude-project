@@ -13,7 +13,9 @@ export async function searchOpenBeautyFacts(query) {
   const url = `${SEARCH_URL}?search_terms=${encodeURIComponent(trimmed)}&fields=${FIELDS}&page_size=5`;
   const res = await fetch(url);
   if (!res.ok) {
-    throw new Error(`查询失败：HTTP ${res.status}`);
+    // No "查询失败：" prefix here — callers already show one in the UI, and
+    // prefixing it twice (once here, once in the UI) reads as "查询失败：查询失败：HTTP 500".
+    throw new Error(`HTTP ${res.status}`);
   }
   const data = await res.json();
   return (data.products || []).filter((p) => p.product_name);
@@ -26,8 +28,13 @@ export async function searchOpenBeautyFacts(query) {
 export async function getProductByBarcode(barcode) {
   const url = `${PRODUCT_URL}/${encodeURIComponent(barcode)}.json?fields=${FIELDS}`;
   const res = await fetch(url);
+  // A barcode Open Beauty Facts doesn't recognize is a normal, expected
+  // outcome (their coverage skews Western-brand-heavy) — the v2 API reports
+  // that as a plain 404, not a 200 with a status:0 body like the older v0
+  // API. Treat it the same as the "not found" case below, not an error.
+  if (res.status === 404) return null;
   if (!res.ok) {
-    throw new Error(`查询失败：HTTP ${res.status}`);
+    throw new Error(`HTTP ${res.status}`);
   }
   const data = await res.json();
   if (data.status !== 1 || !data.product) return null;
