@@ -1,7 +1,10 @@
-// Use whatever host the page itself was loaded from rather than hardcoding
-// "localhost" — that lets this work both on the dev machine and when opening
-// the app from a phone on the same LAN via the machine's IP address.
-const BASE = `http://${typeof window !== 'undefined' ? window.location.hostname : 'localhost'}:4001`;
+// Relative path, proxied by Vite (see vite.config.js) to core-api on
+// localhost:4001. Using a same-origin relative path — instead of an absolute
+// http://<host>:4001 URL — means this works identically whether the page was
+// opened at http://localhost:5173 or https://<lan-ip>:5173 (needed for
+// camera-based features to work from a phone, which requires HTTPS), without
+// ever hitting the browser's mixed-content blocking.
+const BASE = '/proxy/core-api';
 
 // photoUrl values returned by the API are relative (e.g. "/uploads/xxx.jpg")
 // since core-api serves them itself; build the absolute URL for <img src>.

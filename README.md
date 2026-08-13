@@ -17,4 +17,4 @@ cd backend/reminder-api && npm install && npm run dev
 cd frontend && npm install && npm run dev
 ```
 
-浏览器打开 `http://localhost:5173`。
+浏览器打开 `https://localhost:5173`（注意是 https，自签名证书会有安全提示，点"继续访问"即可）。手机测试见 [DESIGN.md](./DESIGN.md#为什么前端dev-server是https以及手机怎么访问)。

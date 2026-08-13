@@ -1,6 +1,6 @@
-// See coreApi.js for why this reads window.location.hostname instead of
-// hardcoding "localhost" — needed for testing from a phone on the same LAN.
-const BASE = `http://${typeof window !== 'undefined' ? window.location.hostname : 'localhost'}:4002`;
+// Relative path, proxied by Vite (see vite.config.js) to reminder-api on
+// localhost:4002. See coreApi.js for why this is a same-origin relative path.
+const BASE = '/proxy/reminder-api';
 
 async function request(path, options) {
   const res = await fetch(`${BASE}${path}`, {

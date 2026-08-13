@@ -83,10 +83,18 @@ frontend/               # 前端 Vite + React 单页应用（端口 5173）
 ```
 cd backend/core-api && npm install && npm run dev       # http://localhost:4001
 cd backend/reminder-api && npm install && npm run dev   # http://localhost:4002
-cd frontend && npm install && npm run dev                # http://localhost:5173
+cd frontend && npm install && npm run dev                # https://localhost:5173（注意是 https）
 ```
 
-前端的 `coreApi.js`/`reminderApi.js` 用 `window.location.hostname` 而不是硬编码 `localhost` 拼接后端地址，所以用手机连同一WiFi访问电脑的局域网IP（如 `http://192.168.x.x:5173`）也能正常调用后端——这对测试"拍照识别"这种依赖真机摄像头的功能很重要。`vite.config.js` 已经设置 `host: true`，后端 `express` 默认监听 `0.0.0.0`，都不需要改。
+## 为什么前端dev server是HTTPS，以及手机怎么访问
+
+摄像头相关API（`getUserMedia`，扫条码功能要用）只在"安全上下文"（HTTPS 或 `localhost`）里才存在。手机通过局域网IP访问电脑（比如 `http://192.168.x.x:5173`）用的是普通HTTP，不算安全上下文，浏览器根本不会把摄像头接口暴露出来，`navigator.mediaDevices` 会是 `undefined`——真机测试时踩过这个坑。
+
+解决方式：`vite.config.js` 用 `@vitejs/plugin-basic-ssl` 给开发服务器配了个自签名HTTPS证书。手机访问时用 **`https://192.168.x.x:5173`**（把IP换成你电脑的局域网IP），浏览器会提示"连接不是私密连接/不安全"，这是正常的（自签名证书没有被系统信任），点"高级"→"继续前往"即可，不影响本地测试安全性。
+
+自签名证书只解决了前端页面本身的HTTPS，两个后端（core-api/reminder-api）还是普通HTTP——如果前端HTTPS页面直接用绝对地址请求HTTP的后端接口，会被浏览器的"混合内容"策略拦截。所以 `vite.config.js` 里配了个代理：`/proxy/core-api/*` 和 `/proxy/reminder-api/*` 由Vite自己的Node进程转发到两个后端（这一跳不经过浏览器，不受混合内容策略限制），`frontend/src/api/coreApi.js`、`reminderApi.js` 也相应改成了同源相对路径（`/proxy/core-api`、`/proxy/reminder-api`）而不是绝对URL。
+
+注意：这套HTTPS+代理是 `vite dev`（也就是 `npm run dev`）专属的开发环境能力，`npm run build` 出的静态文件如果直接拿去部署，需要额外配置反向代理才能达到同样效果——本项目目前只覆盖本地开发测试场景。
 
 ## 单元测试
 
