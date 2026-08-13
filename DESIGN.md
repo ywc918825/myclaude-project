@@ -101,6 +101,12 @@ cd frontend && npm test               # vitest run，覆盖各页面的纯函数
 - 柜子列表每张卡片新增"编辑"按钮，复用 `AddProduct.jsx` 表单（`editingProduct` prop 存在即为编辑模式），保存走 `PUT /api/products/:id`；"删除"现在会弹确认框，避免误删。
 - "提醒"页新增到期提醒通知开关：基于浏览器 `Notification` API，每天最多提醒一次（用 `localStorage` 去重），**仅在这个页面被打开时生效**——这不是真正的后台推送，需要后台推送得接入 service worker + 推送服务器，超出原型范围，如果要做留作后续路线图。
 
+## 数据库：Node 内置 `node:sqlite`，不用 `better-sqlite3`
+
+`backend/core-api/db.js` 用的是 Node 自带的 `node:sqlite`（`DatabaseSync`），不是 `better-sqlite3`。原因：`better-sqlite3` 是原生编译模块，装的时候如果没有对应Node版本的预编译二进制包，就会本地用 node-gyp 现场编译，需要装 Visual Studio Build Tools（Windows）或 Xcode Command Line Tools（Mac）——普通用户的电脑上大概率没装，`npm install` 会直接报错卡住。换成 `node:sqlite` 后完全不需要编译任何东西，装完 Node（>=22.5.0，本项目建议用较新的LTS）就能直接跑。
+
+API 用法和 `better-sqlite3` 几乎一致（`db.prepare(sql).get/all/run(params)`、支持 `@name` 具名参数），唯一差别是没有 `.transaction()` 辅助方法，种子数据插入改成手写 `BEGIN`/`COMMIT`。控制台会打一行 `ExperimentalWarning: SQLite is an experimental feature`，这是Node自己的提示，不影响使用，忽略即可。
+
 ## 拍照识别（stage2）
 
 - 纯客户端 OCR，用 `tesseract.js`（chi_sim+eng），不依赖任何云端OCR API/密钥，识别在浏览器本地完成。
