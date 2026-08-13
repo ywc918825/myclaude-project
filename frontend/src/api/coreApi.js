@@ -1,4 +1,7 @@
-const BASE = 'http://localhost:4001';
+// Use whatever host the page itself was loaded from rather than hardcoding
+// "localhost" — that lets this work both on the dev machine and when opening
+// the app from a phone on the same LAN via the machine's IP address.
+const BASE = `http://${typeof window !== 'undefined' ? window.location.hostname : 'localhost'}:4001`;
 
 // photoUrl values returned by the API are relative (e.g. "/uploads/xxx.jpg")
 // since core-api serves them itself; build the absolute URL for <img src>.

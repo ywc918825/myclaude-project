@@ -1,4 +1,6 @@
-const BASE = 'http://localhost:4002';
+// See coreApi.js for why this reads window.location.hostname instead of
+// hardcoding "localhost" — needed for testing from a phone on the same LAN.
+const BASE = `http://${typeof window !== 'undefined' ? window.location.hostname : 'localhost'}:4002`;
 
 async function request(path, options) {
   const res = await fetch(`${BASE}${path}`, {

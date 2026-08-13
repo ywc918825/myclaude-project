@@ -1,33 +1,26 @@
 const express = require('express');
 const router = express.Router();
 const db = require('../db');
+const { addMonths, daysFromToday, statusFromDaysRemaining } = require('../dateUtils');
 
-// ---- date helpers (no extra deps) ----
+const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 
-// Add `months` calendar months to a "YYYY-MM-DD" date string, return "YYYY-MM-DD".
-function addMonths(dateStr, months) {
-  const [y, m, d] = dateStr.split('-').map(Number);
-  const date = new Date(Date.UTC(y, m - 1, d));
-  date.setUTCMonth(date.getUTCMonth() + months);
-  return date.toISOString().slice(0, 10);
-}
-
-// Integer day difference from today (UTC midnight) to target "YYYY-MM-DD" date.
-function daysFromToday(dateStr) {
-  const [y, m, d] = dateStr.split('-').map(Number);
-  const target = Date.UTC(y, m - 1, d);
-
-  const now = new Date();
-  const today = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate());
-
-  const MS_PER_DAY = 24 * 60 * 60 * 1000;
-  return Math.round((target - today) / MS_PER_DAY);
-}
-
-function statusFromDaysRemaining(daysRemaining) {
-  if (daysRemaining < 0) return 'expired';
-  if (daysRemaining <= 14) return 'warning';
-  return 'ok';
+// Required-field validation at the API boundary — this used to be entirely
+// unvalidated, so a malformed request (missing openedDate, non-numeric
+// paoMonths, etc.) would either 500 or silently write a broken row.
+function validateProductInput(body) {
+  const errors = [];
+  if (!body || typeof body.name !== 'string' || !body.name.trim()) errors.push('name 不能为空');
+  if (!body || typeof body.category !== 'string' || !body.category.trim()) errors.push('category 不能为空');
+  if (!body || typeof body.openedDate !== 'string' || !DATE_RE.test(body.openedDate)) {
+    errors.push('openedDate 必须是 YYYY-MM-DD 格式');
+  }
+  const paoMonths = Number(body && body.paoMonths);
+  if (!Number.isFinite(paoMonths) || paoMonths <= 0) errors.push('paoMonths 必须是正数');
+  if (body && body.ingredientTags !== undefined && !Array.isArray(body.ingredientTags)) {
+    errors.push('ingredientTags 必须是数组');
+  }
+  return errors;
 }
 
 // Convert a raw DB row (ingredientTags stored as JSON string) into the full
@@ -60,6 +53,11 @@ router.get('/:id', (req, res) => {
 });
 
 router.post('/', (req, res) => {
+  const validationErrors = validateProductInput(req.body);
+  if (validationErrors.length > 0) {
+    return res.status(400).json({ error: validationErrors.join('; ') });
+  }
+
   const { name, brand, category, openedDate, paoMonths, ingredientTags, costCNY, photoUrl } = req.body;
   const createdAt = new Date().toISOString();
 
@@ -87,6 +85,11 @@ router.post('/', (req, res) => {
 router.put('/:id', (req, res) => {
   const existing = db.prepare('SELECT * FROM products WHERE id = ?').get(req.params.id);
   if (!existing) return res.status(404).json({ error: 'not found' });
+
+  const validationErrors = validateProductInput(req.body);
+  if (validationErrors.length > 0) {
+    return res.status(400).json({ error: validationErrors.join('; ') });
+  }
 
   const { name, brand, category, openedDate, paoMonths, ingredientTags, costCNY, photoUrl } = req.body;
 
@@ -127,4 +130,5 @@ router.delete('/:id', (req, res) => {
   res.status(204).end();
 });
 
+router.validateProductInput = validateProductInput; // exposed for unit tests
 module.exports = router;

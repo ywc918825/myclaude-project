@@ -14,7 +14,13 @@ const TABS = [
 export default function App() {
   const [tab, setTab] = useState('cabinet');
   const [refreshKey, setRefreshKey] = useState(0);
+  const [editingProduct, setEditingProduct] = useState(null);
   const bumpRefresh = () => setRefreshKey((k) => k + 1);
+
+  const goToTab = (key) => {
+    setEditingProduct(null); // switching tabs via the nav bar always exits edit mode
+    setTab(key);
+  };
 
   return (
     <div className="phone-frame">
@@ -23,8 +29,30 @@ export default function App() {
       </header>
 
       <main className="app-content">
-        {tab === 'cabinet' && <CabinetOverview refreshKey={refreshKey} />}
-        {tab === 'add' && <AddProduct onCreated={() => { bumpRefresh(); setTab('cabinet'); }} />}
+        {tab === 'cabinet' && (
+          <CabinetOverview
+            refreshKey={refreshKey}
+            onEdit={(product) => {
+              setEditingProduct(product);
+              setTab('add');
+            }}
+          />
+        )}
+        {tab === 'add' && (
+          <AddProduct
+            key={editingProduct ? `edit-${editingProduct.id}` : 'add'}
+            editingProduct={editingProduct}
+            onSaved={() => {
+              setEditingProduct(null);
+              bumpRefresh();
+              setTab('cabinet');
+            }}
+            onCancel={() => {
+              setEditingProduct(null);
+              setTab('cabinet');
+            }}
+          />
+        )}
         {tab === 'reminder' && <ReminderCenter refreshKey={refreshKey} />}
         {tab === 'report' && <ConsumptionReport refreshKey={refreshKey} />}
       </main>
@@ -34,7 +62,7 @@ export default function App() {
           <button
             key={t.key}
             className={`tab-item ${tab === t.key ? 'active' : ''}`}
-            onClick={() => setTab(t.key)}
+            onClick={() => goToTab(t.key)}
           >
             {t.label}
           </button>

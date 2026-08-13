@@ -67,7 +67,7 @@ frontend/               # 前端 Vite + React 单页应用（端口 5173）
     totalValueCNY: number,
     wastedValueCNY: number,        // status === "expired" 的 costCNY 之和
     categoryBreakdown: { [category: string]: number },
-    monthlyOpened: { "YYYY-MM": { count: number, costCNY: number } }[]  // 按 openedDate 的年月分组，按月份升序
+    monthlyOpened: { month: string, count: number, costCNY: number }[]  // 按 openedDate 的年月分组（"YYYY-MM"），按月份升序
   }
   ```
 
@@ -85,6 +85,21 @@ cd backend/core-api && npm install && npm run dev       # http://localhost:4001
 cd backend/reminder-api && npm install && npm run dev   # http://localhost:4002
 cd frontend && npm install && npm run dev                # http://localhost:5173
 ```
+
+前端的 `coreApi.js`/`reminderApi.js` 用 `window.location.hostname` 而不是硬编码 `localhost` 拼接后端地址，所以用手机连同一WiFi访问电脑的局域网IP（如 `http://192.168.x.x:5173`）也能正常调用后端——这对测试"拍照识别"这种依赖真机摄像头的功能很重要。`vite.config.js` 已经设置 `host: true`，后端 `express` 默认监听 `0.0.0.0`，都不需要改。
+
+## 单元测试
+
+```
+cd backend/core-api && npm test       # node --test，覆盖日期计算、输入校验
+cd backend/reminder-api && npm test   # node --test，覆盖成分冲突匹配、报表聚合
+cd frontend && npm test               # vitest run，覆盖各页面的纯函数逻辑
+```
+
+## 编辑产品 / 到期提醒通知
+
+- 柜子列表每张卡片新增"编辑"按钮，复用 `AddProduct.jsx` 表单（`editingProduct` prop 存在即为编辑模式），保存走 `PUT /api/products/:id`；"删除"现在会弹确认框，避免误删。
+- "提醒"页新增到期提醒通知开关：基于浏览器 `Notification` API，每天最多提醒一次（用 `localStorage` 去重），**仅在这个页面被打开时生效**——这不是真正的后台推送，需要后台推送得接入 service worker + 推送服务器，超出原型范围，如果要做留作后续路线图。
 
 ## 拍照识别（stage2）
 
