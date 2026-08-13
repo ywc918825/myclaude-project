@@ -24,7 +24,10 @@ const INGREDIENT_VOCAB = [
 
 // Downscale a captured photo before OCR/upload — phone camera photos can be
 // several MB, which is slow to run OCR on and needlessly large to store.
-function resizeImageToDataUrl(file, maxDim = 1400) {
+// maxDim defaults fairly high (vs. a typical thumbnail size) because OCR
+// accuracy on small printed ingredient-list text drops off fast once the
+// text itself shrinks below a few pixels tall.
+function resizeImageToDataUrl(file, maxDim = 2000) {
   return new Promise((resolve, reject) => {
     const img = new Image();
     const reader = new FileReader();
@@ -46,15 +49,35 @@ function resizeImageToDataUrl(file, maxDim = 1400) {
   });
 }
 
+// Symbols that essentially never appear in a real product name but show up
+// constantly in OCR misreads of stylized logos/cursive labels/reflections —
+// lines containing them are almost certainly noise, not a product name.
+const OCR_NOISE_CHARS = /[=:><\\|{}[\]~^`：《》『』""'']/;
+
 // OCR gives us a blob of raw text with no notion of "this is the product
-// name" — as a simple stand-in, guess the name is the longest line that
-// isn't just digits/punctuation. It's a starting point for the user to
-// correct, not a claim of accuracy.
+// name" — as a simple stand-in, guess the name is the longest line that (a)
+// isn't dominated by digits/punctuation, (b) doesn't contain characters that
+// only ever show up as recognition noise, and (c) is long enough to plausibly
+// be a name rather than a 1-2 character misread fragment. This filters out
+// the worst garbage but can't catch every misread (e.g. real letters that
+// spell nonsense) — it's a starting point for the user to correct via the
+// "查看识别到的文字" raw text, not a claim of accuracy. Recognition quality
+// depends heavily on photo quality: flat printed text (like an ingredients
+// list) reads far better than a curved bottle or a cursive brand logo.
 export function guessNameFromText(text) {
   const lines = text
     .split('\n')
     .map((l) => l.trim())
-    .filter((l) => l.replace(/[\s\d.,:;!?%()-]/g, '').length >= 2);
+    .filter((l) => l.replace(/[\s\d.,:;!?%()-]/g, '').length >= 2)
+    .filter((l) => !OCR_NOISE_CHARS.test(l))
+    // Chinese product names can legitimately be very short ("水乳", "面霜"),
+    // but a short ALL-Latin fragment ("a LL") is almost always a misread —
+    // so only Latin/digit-only lines need to clear a higher length bar.
+    .filter((l) => (/[一-鿿]/.test(l) ? l.length >= 2 : l.length >= 5))
+    .filter((l) => {
+      const wordChars = (l.match(/[\p{L}\p{N}]/gu) || []).length;
+      return wordChars / l.length >= 0.7;
+    });
   if (lines.length === 0) return '';
   return lines.reduce((longest, l) => (l.length > longest.length ? l : longest), lines[0]);
 }
@@ -231,7 +254,15 @@ export default function AddProduct({ editingProduct, onSaved, onCancel }) {
       setLookupStatus(results.length ? 'results' : 'empty');
     } catch (err) {
       setLookupStatus('error');
-      setLookupError(err.message);
+      // A bare "Failed to fetch" almost always means the request never left
+      // the browser (DNS/network/firewall), not that the API responded with
+      // an error — Open Beauty Facts is hosted outside mainland China, so
+      // this is the most common cause for users without direct access to it.
+      setLookupError(
+        err.message === 'Failed to fetch'
+          ? '连接不上 Open Beauty Facts（world.openbeautyfacts.org）。这个网站在境内可能需要科学上网才能访问，可以在手机浏览器里直接打开这个网址确认是否能连通；连不上的话可以先手动填写产品信息。'
+          : err.message
+      );
     }
   };
 
@@ -330,14 +361,19 @@ export default function AddProduct({ editingProduct, onSaved, onCancel }) {
         />
 
         {!photoPreview && (
-          <button
-            type="button"
-            className="btn-primary"
-            style={{ background: 'white', color: 'var(--pink-500)', border: '1px solid var(--pink-400)' }}
-            onClick={() => fileInputRef.current && fileInputRef.current.click()}
-          >
-            📷 拍照 / 上传产品照片
-          </button>
+          <>
+            <button
+              type="button"
+              className="btn-primary"
+              style={{ background: 'white', color: 'var(--pink-500)', border: '1px solid var(--pink-400)' }}
+              onClick={() => fileInputRef.current && fileInputRef.current.click()}
+            >
+              📷 拍照 / 上传产品照片
+            </button>
+            <div style={{ fontSize: 12, color: 'var(--muted)', marginTop: 6 }}>
+              拍摄小贴士：正对文字、光线充足、离近一点让文字占满画面，识别效果会好很多；瓶身曲面反光的艺术字logo通常很难识别准确，尽量拍外包装上的印刷文字（比如成分表）。
+            </div>
+          </>
         )}
 
         {photoPreview && (
