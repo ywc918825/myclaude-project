@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { coreApi } from '../../api/coreApi.js';
+import { searchOpenBeautyFacts, matchKnownIngredients } from '../../api/openBeautyFacts.js';
 
 const PAO_OPTIONS = [6, 12, 18, 24];
 
@@ -91,6 +92,11 @@ export default function AddProduct({ onCreated }) {
   const [ocrStatus, setOcrStatus] = useState('idle'); // idle | recognizing | done | error
   const [ocrProgress, setOcrProgress] = useState(0);
   const [recognizedText, setRecognizedText] = useState('');
+
+  const [lookupStatus, setLookupStatus] = useState('idle'); // idle | searching | results | empty | error
+  const [lookupResults, setLookupResults] = useState([]);
+  const [lookupError, setLookupError] = useState('');
+  const [appliedResult, setAppliedResult] = useState(null); // { name, ingredientsText, matchedTags }
 
   useEffect(() => {
     let cancelled = false;
@@ -191,6 +197,43 @@ export default function AddProduct({ onCreated }) {
     setRecognizedText('');
   };
 
+  const handleLookup = async () => {
+    const query = [form.brand.trim(), form.name.trim()].filter(Boolean).join(' ');
+    if (!query) return;
+
+    setLookupStatus('searching');
+    setLookupError('');
+    setLookupResults([]);
+    setAppliedResult(null);
+
+    try {
+      const results = await searchOpenBeautyFacts(query);
+      setLookupResults(results);
+      setLookupStatus(results.length ? 'results' : 'empty');
+    } catch (err) {
+      setLookupStatus('error');
+      setLookupError(err.message);
+    }
+  };
+
+  const handleApplyResult = (product) => {
+    const matchedTags = matchKnownIngredients(product.ingredients_text, product.ingredients_text_zh, INGREDIENT_VOCAB);
+
+    setForm((f) => ({
+      ...f,
+      brand: f.brand.trim() ? f.brand : product.brands || f.brand,
+      ingredientTags: Array.from(new Set([...f.ingredientTags, ...matchedTags]))
+    }));
+
+    setAppliedResult({
+      name: product.product_name,
+      ingredientsText: product.ingredients_text_zh || product.ingredients_text || '',
+      matchedTags
+    });
+    setLookupStatus('idle');
+    setLookupResults([]);
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
@@ -218,6 +261,9 @@ export default function AddProduct({ onCreated }) {
       });
       setForm({ ...initialForm, category: categories[0] || '' });
       handleClearPhoto();
+      setLookupStatus('idle');
+      setLookupResults([]);
+      setAppliedResult(null);
       onCreated && onCreated();
     } catch (err) {
       setError(`创建失败：${err.message}`);
@@ -332,6 +378,84 @@ export default function AddProduct({ onCreated }) {
           onChange={(e) => updateField('brand', e.target.value)}
           placeholder="例如：珂润"
         />
+      </div>
+
+      <div className="field">
+        <button
+          type="button"
+          className="btn-primary"
+          style={{ background: 'white', color: 'var(--pink-500)', border: '1px solid var(--pink-400)' }}
+          onClick={handleLookup}
+          disabled={!form.name.trim() && !form.brand.trim()}
+        >
+          {lookupStatus === 'searching' ? '查询中…' : '🔍 联网查询产品信息（品牌/成分）'}
+        </button>
+
+        {lookupStatus === 'error' && (
+          <div className="status-expired" style={{ fontSize: 13, marginTop: 6 }}>
+            查询失败：{lookupError}
+          </div>
+        )}
+        {lookupStatus === 'empty' && (
+          <div className="empty-state" style={{ padding: '8px 0' }}>未找到匹配的产品，可继续手动填写</div>
+        )}
+
+        {lookupStatus === 'results' && (
+          <div style={{ marginTop: 8 }}>
+            {lookupResults.map((product, idx) => (
+              <button
+                key={product.code || idx}
+                type="button"
+                onClick={() => handleApplyResult(product)}
+                className="card"
+                style={{
+                  display: 'flex',
+                  gap: 10,
+                  alignItems: 'center',
+                  width: '100%',
+                  textAlign: 'left',
+                  cursor: 'pointer',
+                  marginBottom: 8,
+                  padding: 10
+                }}
+              >
+                {product.image_small_url ? (
+                  <img
+                    src={product.image_small_url}
+                    alt={product.product_name}
+                    style={{ width: 40, height: 40, objectFit: 'cover', borderRadius: 8, flexShrink: 0 }}
+                  />
+                ) : (
+                  <div style={{ width: 40, height: 40, borderRadius: 8, background: 'var(--pink-100)', flexShrink: 0 }} />
+                )}
+                <div style={{ fontSize: 13 }}>
+                  <div style={{ fontWeight: 600 }}>{product.product_name}</div>
+                  <div style={{ color: 'var(--muted)' }}>{product.brands || '品牌未知'}</div>
+                </div>
+              </button>
+            ))}
+            <div style={{ fontSize: 12, color: 'var(--muted)' }}>数据来源：Open Beauty Facts（开源化妆品数据库）</div>
+          </div>
+        )}
+
+        {appliedResult && (
+          <div className="card" style={{ marginTop: 8, padding: 10, fontSize: 13 }}>
+            <div className="status-ok">
+              已从「{appliedResult.name}」带入品牌
+              {appliedResult.matchedTags.length > 0 ? `和 ${appliedResult.matchedTags.length} 个已知成分标签` : ''}
+              ，请核对
+            </div>
+            {appliedResult.ingredientsText && (
+              <details style={{ marginTop: 4 }}>
+                <summary style={{ cursor: 'pointer', color: 'var(--muted)' }}>查看完整成分表原文</summary>
+                <div style={{ whiteSpace: 'pre-wrap', color: 'var(--muted)', marginTop: 4 }}>
+                  {appliedResult.ingredientsText}
+                </div>
+              </details>
+            )}
+            <div style={{ fontSize: 12, color: 'var(--muted)', marginTop: 4 }}>数据来源：Open Beauty Facts</div>
+          </div>
+        )}
       </div>
 
       <div className="field">
