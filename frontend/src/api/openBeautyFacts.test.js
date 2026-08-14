@@ -79,12 +79,20 @@ describe('getProductByBarcode', () => {
     expect(product).toEqual({ product_name: 'Snail Cream', brands: 'COSRX' });
   });
 
-  it('returns null when the barcode has no match (status 0)', async () => {
+  it('returns null when the barcode has no match (status 0 in a 200 body)', async () => {
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: true, json: async () => ({ status: 0 }) }));
     expect(await getProductByBarcode('0000000000000')).toBeNull();
   });
 
-  it('throws a readable error on a non-ok HTTP response', async () => {
+  it('returns null (not an error) when the barcode has no match reported as a plain HTTP 404', async () => {
+    // Field-observed: Open Beauty Facts' v2 product endpoint reports an
+    // unrecognized barcode as a 404, not a 200 with status:0 — this used to
+    // surface as a scary "查询失败：HTTP 404" instead of the not-found message.
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: false, status: 404 }));
+    expect(await getProductByBarcode('6900000000000')).toBeNull();
+  });
+
+  it('throws a readable error on a genuine non-404 non-ok HTTP response', async () => {
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: false, status: 500 }));
     await expect(getProductByBarcode('123')).rejects.toThrow('500');
   });
