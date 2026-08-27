@@ -1,0 +1,60 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 930 930" width="930" height="930" font-family="'WenQuanYi Zen Hei','Noto Sans CJK SC','Microsoft YaHei',sans-serif">
+<rect width="930" height="930" fill="#ffffff"/>
+<defs>
+<path id="garc0" d="M 380.72,41.30 A 432.00,432.00 0 0 1 888.70,380.72" fill="none"/>
+<path id="garc1" d="M 558.25,933.82 A 478.00,478.00 0 0 0 933.82,371.75" fill="none"/>
+<path id="garc2" d="M -3.82,558.25 A 478.00,478.00 0 0 0 558.25,933.82" fill="none"/>
+<path id="garc3" d="M 41.30,549.28 A 432.00,432.00 0 0 1 380.72,41.30" fill="none"/>
+</defs>
+<path d="M 465.00,465.00 L 402.57,151.15 A 320.00,320.00 0 0 1 778.85,402.57 Z" fill="#2a78d6" fill-opacity="0.055"/>
+<path d="M 465.00,465.00 L 778.85,402.57 A 320.00,320.00 0 0 1 527.43,778.85 Z" fill="#eb6834" fill-opacity="0.055"/>
+<path d="M 465.00,465.00 L 527.43,778.85 A 320.00,320.00 0 0 1 151.15,527.43 Z" fill="#1baf7a" fill-opacity="0.055"/>
+<path d="M 465.00,465.00 L 151.15,527.43 A 320.00,320.00 0 0 1 402.57,151.15 Z" fill="#4a3aa7" fill-opacity="0.055"/>
+<polygon points="465.00,365.00 503.27,372.61 535.71,394.29 557.39,426.73 565.00,465.00 557.39,503.27 535.71,535.71 503.27,557.39 465.00,565.00 426.73,557.39 394.29,535.71 372.61,503.27 365.00,465.00 372.61,426.73 394.29,394.29 426.73,372.61" fill="none" stroke="#c9cdd4" stroke-width="1.1"/>
+<polygon points="465.00,300.00 528.14,312.56 581.67,348.33 617.44,401.86 630.00,465.00 617.44,528.14 581.67,581.67 528.14,617.44 465.00,630.00 401.86,617.44 348.33,581.67 312.56,528.14 300.00,465.00 312.56,401.86 348.33,348.33 401.86,312.56" fill="none" stroke="#c9cdd4" stroke-width="1.1"/>
+<polygon points="465.00,235.00 553.02,252.51 627.63,302.37 677.49,376.98 695.00,465.00 677.49,553.02 627.63,627.63 553.02,677.49 465.00,695.00 376.98,677.49 302.37,627.63 252.51,553.02 235.00,465.00 252.51,376.98 302.37,302.37 376.98,252.51" fill="none" stroke="#c9cdd4" stroke-width="1.1"/>
+<polygon points="465.00,170.00 577.89,192.46 673.60,256.40 737.54,352.11 760.00,465.00 737.54,577.89 673.60,673.60 577.89,737.54 465.00,760.00 352.11,737.54 256.40,673.60 192.46,577.89 170.00,465.00 192.46,352.11 256.40,256.40 352.11,192.46" fill="none" stroke="#c9cdd4" stroke-width="1.1"/>
+<polygon points="465.00,170.00 577.89,192.46 673.60,256.40 737.54,352.11 760.00,465.00 737.54,577.89 673.60,673.60 577.89,737.54 465.00,760.00 352.11,737.54 256.40,673.60 192.46,577.89 170.00,465.00 192.46,352.11 256.40,256.40 352.11,192.46" fill="none" stroke="#c9cdd4" stroke-width="1.6"/>
+<line x1="465.0" y1="465.0" x2="465.00" y2="170.00" stroke="#c9cdd4" stroke-width="1.1"/>
+<line x1="465.0" y1="465.0" x2="577.89" y2="192.46" stroke="#c9cdd4" stroke-width="1.1"/>
+<line x1="465.0" y1="465.0" x2="673.60" y2="256.40" stroke="#c9cdd4" stroke-width="1.1"/>
+<line x1="465.0" y1="465.0" x2="737.54" y2="352.11" stroke="#c9cdd4" stroke-width="1.1"/>
+<line x1="465.0" y1="465.0" x2="760.00" y2="465.00" stroke="#c9cdd4" stroke-width="1.1"/>
+<line x1="465.0" y1="465.0" x2="737.54" y2="577.89" stroke="#c9cdd4" stroke-width="1.1"/>
+<line x1="465.0" y1="465.0" x2="673.60" y2="673.60" stroke="#c9cdd4" stroke-width="1.1"/>
+<line x1="465.0" y1="465.0" x2="577.89" y2="737.54" stroke="#c9cdd4" stroke-width="1.1"/>
+<line x1="465.0" y1="465.0" x2="465.00" y2="760.00" stroke="#c9cdd4" stroke-width="1.1"/>
+<line x1="465.0" y1="465.0" x2="352.11" y2="737.54" stroke="#c9cdd4" stroke-width="1.1"/>
+<line x1="465.0" y1="465.0" x2="256.40" y2="673.60" stroke="#c9cdd4" stroke-width="1.1"/>
+<line x1="465.0" y1="465.0" x2="192.46" y2="577.89" stroke="#c9cdd4" stroke-width="1.1"/>
+<line x1="465.0" y1="465.0" x2="170.00" y2="465.00" stroke="#c9cdd4" stroke-width="1.1"/>
+<line x1="465.0" y1="465.0" x2="192.46" y2="352.11" stroke="#c9cdd4" stroke-width="1.1"/>
+<line x1="465.0" y1="465.0" x2="256.40" y2="256.40" stroke="#c9cdd4" stroke-width="1.1"/>
+<line x1="465.0" y1="465.0" x2="352.11" y2="192.46" stroke="#c9cdd4" stroke-width="1.1"/>
+<circle cx="465.0" cy="465.0" r="3.4" fill="#555555"/>
+<text x="458.0" y="469.0" text-anchor="end" font-size="22" fill="#555555">20</text>
+<text x="458.0" y="369.0" text-anchor="end" font-size="22" fill="#555555">40</text>
+<text x="458.0" y="304.0" text-anchor="end" font-size="22" fill="#555555">60</text>
+<text x="458.0" y="239.0" text-anchor="end" font-size="22" fill="#555555">80</text>
+<text x="458.0" y="174.0" text-anchor="end" font-size="22" fill="#555555">100</text>
+<text x="465.00" y="115.00" text-anchor="middle" font-size="30" fill="#1b1b1b"><tspan x="465.00" dy="-4">发表</tspan><tspan x="465.00" dy="32">论文</tspan></text>
+<text x="598.94" y="141.64" text-anchor="middle" font-size="30" fill="#1b1b1b"><tspan x="598.94" dy="-4">出版</tspan><tspan x="598.94" dy="32">著作</tspan></text>
+<text x="712.49" y="217.51" text-anchor="middle" font-size="30" fill="#1b1b1b"><tspan x="712.49" dy="-4">项目</tspan><tspan x="712.49" dy="32">课题</tspan></text>
+<text x="788.36" y="331.06" text-anchor="middle" font-size="30" fill="#1b1b1b"><tspan x="788.36" dy="-4">成果</tspan><tspan x="788.36" dy="32">奖励</tspan></text>
+<text x="815.00" y="465.00" text-anchor="middle" font-size="30" fill="#1b1b1b"><tspan x="815.00" dy="-4">专利</tspan><tspan x="815.00" dy="32">发明</tspan></text>
+<text x="788.36" y="598.94" text-anchor="middle" font-size="30" fill="#1b1b1b"><tspan x="788.36" dy="-4">技术</tspan><tspan x="788.36" dy="32">标准</tspan></text>
+<text x="712.49" y="712.49" text-anchor="middle" font-size="30" fill="#1b1b1b"><tspan x="712.49" dy="-4">成果</tspan><tspan x="712.49" dy="32">转化</tspan></text>
+<text x="598.94" y="788.36" text-anchor="middle" font-size="30" fill="#1b1b1b"><tspan x="598.94" dy="-4">工作</tspan><tspan x="598.94" dy="32">文章</tspan></text>
+<text x="465.00" y="815.00" text-anchor="middle" font-size="30" fill="#1b1b1b"><tspan x="465.00" dy="-4">学术</tspan><tspan x="465.00" dy="32">交流</tspan></text>
+<text x="331.06" y="788.36" text-anchor="middle" font-size="30" fill="#1b1b1b"><tspan x="331.06" dy="-4">学术</tspan><tspan x="331.06" dy="32">地位</tspan></text>
+<text x="217.51" y="712.49" text-anchor="middle" font-size="30" fill="#1b1b1b"><tspan x="217.51" dy="-4">学术</tspan><tspan x="217.51" dy="32">团队</tspan></text>
+<text x="141.64" y="598.94" text-anchor="middle" font-size="30" fill="#1b1b1b"><tspan x="141.64" dy="-4">科普</tspan><tspan x="141.64" dy="32">作品</tspan></text>
+<text x="115.00" y="465.00" text-anchor="middle" font-size="30" fill="#1b1b1b"><tspan x="115.00" dy="-4">技能</tspan><tspan x="115.00" dy="32">资质</tspan></text>
+<text x="141.64" y="331.06" text-anchor="middle" font-size="30" fill="#1b1b1b"><tspan x="141.64" dy="-4">继续</tspan><tspan x="141.64" dy="32">教育</tspan></text>
+<text x="217.51" y="217.51" text-anchor="middle" font-size="30" fill="#1b1b1b"><tspan x="217.51" dy="-4">学术</tspan><tspan x="217.51" dy="32">比赛</tspan></text>
+<text x="331.06" y="141.64" text-anchor="middle" font-size="30" fill="#1b1b1b"><tspan x="331.06" dy="-4">荣誉</tspan><tspan x="331.06" dy="32">表彰</tspan></text>
+<text font-size="31" font-weight="bold" fill="#2a78d6" letter-spacing="3"><textPath href="#garc0" startOffset="50%" text-anchor="middle">学术产出</textPath></text>
+<text font-size="31" font-weight="bold" fill="#eb6834" letter-spacing="3"><textPath href="#garc1" startOffset="50%" text-anchor="middle">技术贡献</textPath></text>
+<text font-size="31" font-weight="bold" fill="#1baf7a" letter-spacing="3"><textPath href="#garc2" startOffset="50%" text-anchor="middle">学术影响</textPath></text>
+<text font-size="31" font-weight="bold" fill="#4a3aa7" letter-spacing="3"><textPath href="#garc3" startOffset="50%" text-anchor="middle">专业成长</textPath></text>
+</svg>
