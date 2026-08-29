@@ -7,7 +7,7 @@ for f in sorted(glob.glob('卷一-*.md')):
     for i in range(1, len(parts), 2):
         ti, b = parts[i], parts[i+1]
         n = cjk(b); tot += n
-        d = sum(cjk(m) for m in re.findall(r'"(.*?)"', b, re.S)) \
+        d = sum(cjk(m) for m in re.findall(r'\u201c(.*?)\u201d', b, re.S)) \
           + sum(cjk(m) for m in re.findall(r'「(.*?)」', b, re.S))
         ps = [x.strip() for x in b.split('\n') if x.strip()]
         c = collections.Counter([x for x in ps if len(x) >= 12])
