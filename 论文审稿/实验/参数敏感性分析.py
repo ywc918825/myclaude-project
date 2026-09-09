@@ -19,18 +19,31 @@
     year    成果完成年度
     month   成果完成月份，1—12，**可省略**
 
-**month 这一列为什么要紧**：式(4) 的 τ_now 取本周期期末、τ_i 取成果完成时间，
-而周期就是自然年度。若只精确到年，同一周期内 τ_now − τ_i 恒为 0，
-exp(−λ·0) ≡ 1，λ 取任何值都得到同一排名——λ 在模型中根本不起作用。
-只有精确到月，λ 才真正作用于"年内早发表 vs 晚发表"的差异（年内最大衰减
-1 − e^(−λ) ≈ 13%）。缺 month 时脚本按年中（第 6.5 月）统一处理，
-并会明确警告 λ 的敏感性结论不成立。
+**两种 τ_now 口径**（`--tau-now`），结论差别很大：
 
-跨年度的时效由式(5) 的 EWMA 承担，与 λ 无关：α = 0.7 时 j 年前的成果权重为
-α(1−α)^j，相对当年为 (1−α)^j，等效半衰期 ln0.5/ln(1−α) ≈ 0.58 年。
+  current（默认，**系统实际实现**）
+      τ_now 取评价时刻，式(4) 按成果的**绝对年龄**衰减。此时同一段时间被折算两次：
+      式(4) 给 e^(−λj)，式(5) 的 EWMA 再给 (1−α)^j。合成后 j 年前成果的相对权重为
+          ((1−α)·e^(−λ))^j = 0.2608^j        (α=0.7, λ=0.14)
+      等效半衰期 ln0.5/ln0.2608 ≈ **0.52 年**，5 年前成果仅剩 0.12%。
+      注意：这与"λ=0.14 对应半衰期 4.95 年"完全不是一回事——后者只描述式(4)
+      单独的行为，而模型的实际衰减由 EWMA 主导。
+
+  period
+      τ_now 取本周期期末，式(4) 只处理周期内部的龄期差异（≤1 年，最大衰减 13%），
+      跨周期时效全部由 EWMA 承担，等效半衰期 ln0.5/ln(1−α) ≈ 0.58 年。
+
+  两者相差不大（0.52 vs 0.58 年），因为 (1−α)=0.3 完全压过了 e^(−λ)=0.87。
+  **想让整体半衰期真正等于 5 年，需要 (1−α)e^(−λ) = 0.871，固定 λ=0.14 则要求
+  α ≈ −0.001——α=0.7 与多年记忆在数学上不可能同时成立。**
+
+**month 这一列**：成果完成时间本就是日期，只精确到年会损失年内先后信息。
+在 period 口径下缺 month 更致命——龄期退化为常数，λ 完全失效、秩相关恒为 1。
+缺失时脚本按年中（第 6.5 月）处理并给出警告。
 
 用法：
     python3 参数敏感性分析.py records.csv --now 2025
+    python3 参数敏感性分析.py records.csv --now 2025 --tau-now period
     python3 参数敏感性分析.py records.csv --now 2025 --out 表8.txt
 """
 import argparse, csv, math, sys
@@ -60,7 +73,7 @@ def spearman(a, b):
     return cov / (va * vb) if va and vb else float('nan')
 
 
-def total_weight(rec, users, tags, alpha, lam, now, ymin):
+def total_weight(rec, users, tags, alpha, lam, now, ymin, tau_now='current'):
     """按式(4)(5) 逐年度递推，返回每人的 Σ_t W(t,u)。"""
     # 每年度、每标签的全中心最高衰减后积分 S_max,t（式(4) 分母）
     W = defaultdict(float)                    # (tag, user) -> 当前权重，初值 0
@@ -76,8 +89,9 @@ def total_weight(rec, users, tags, alpha, lam, now, ymin):
                 continue
             if smax[t] <= 0:
                 continue
-            # τ_now 取本周期期末(y+1)，τ_i 取成果完成时刻(yy+frac) → 周期内衰减
-            age = max(0.0, (y + 1.0) - (yy + frac))
+            # τ_now: current=评价时刻(系统实际实现) / period=本周期期末
+            ref = (now + 1.0) if tau_now == 'current' else (y + 1.0)
+            age = max(0.0, ref - (yy + frac))
             decayed = p * math.exp(-lam * age)
             cur[(t, u)] += decayed / smax[t]
         # 本年度行为项归一化到 [0,1]（Σw_i = 1，按人-标签内部等权）
@@ -98,6 +112,8 @@ def main():
     ap.add_argument('--alphas', default='0.5,0.6,0.7,0.8,0.9')
     ap.add_argument('--lambdas', default='0.07,0.14,0.21,0.28')
     ap.add_argument('--out', default='')
+    ap.add_argument('--tau-now', choices=['current','period'], default='current',
+                    help="current=评价时刻(系统实际实现); period=本周期期末")
     a = ap.parse_args()
 
     rec, has_month = [], False
@@ -122,11 +138,19 @@ def main():
     alphas = [float(x) for x in a.alphas.split(',')]
     lams = [float(x) for x in a.lambdas.split(',')]
     A0, L0 = 0.7, 0.14
+    TN = a.tau_now
 
     out = []
     P = out.append
     P('样本：%d 名科研人员，%d 个标签，%d 条行为积分，年度 %d–%d'
       % (len(users), len(tags), len(rec), ymin, a.now))
+    P('τ_now 口径：%s' % ('评价时刻（系统实际实现，式(4) 按成果绝对年龄衰减）'
+                         if TN == 'current' else '本周期期末（仅周期内衰减）'))
+    if TN == 'current':
+        q = (1 - A0) * math.exp(-L0)
+        P('注意：此口径下式(4) 与式(5) 对同一段时间各折算一次，合成后 j 年前成果')
+        P('      相对权重为 ((1−α)e^(−λ))^j = %.4f^j，等效半衰期 %.2f 年。'
+          % (q, math.log(0.5) / math.log(q)))
     if not has_month:
         P('')
         P('⚠ 数据无 month 列，全部按年中处理 → 周期内成果龄期恒为 0.5 年，')
@@ -134,12 +158,12 @@ def main():
         P('  该结果不能作为“λ 不敏感”的证据。请补 month 列后重跑。')
     P('')
 
-    base = total_weight(rec, users, tags, A0, L0, a.now, ymin)
+    base = total_weight(rec, users, tags, A0, L0, a.now, ymin, TN)
     P('表 8  α 的敏感性（λ = 0.14 固定，与 α = 0.7 的排名比较）')
     P('%-10s %-16s %-14s' % ('α', 'Spearman 秩相关', 'Top-10 重合'))
     r0 = sorted(range(len(users)), key=lambda i: -base[i])
     for al in alphas:
-        v = total_weight(rec, users, tags, al, L0, a.now, ymin)
+        v = total_weight(rec, users, tags, al, L0, a.now, ymin, TN)
         rk = sorted(range(len(users)), key=lambda i: -v[i])
         ov = len(set(r0[:10]) & set(rk[:10]))
         P('%-10.2f %-16.4f %-14s' % (al, spearman(base, v), '%d/10' % ov))
@@ -147,17 +171,18 @@ def main():
     P('表 9  λ 的敏感性（α = 0.7 固定，与 λ = 0.14 的排名比较）')
     P('%-10s %-16s %-14s %-12s' % ('λ', 'Spearman 秩相关', 'Top-10 重合', '半衰期/年'))
     for lm in lams:
-        v = total_weight(rec, users, tags, A0, lm, a.now, ymin)
+        v = total_weight(rec, users, tags, A0, lm, a.now, ymin, TN)
         rk = sorted(range(len(users)), key=lambda i: -v[i])
         ov = len(set(r0[:10]) & set(rk[:10]))
         P('%-10.2f %-16.4f %-14s %-12.2f'
           % (lm, spearman(base, v), '%d/10' % ov, math.log(2) / lm))
     P('')
     P('该怎么写这一节：')
-    P('  · 若 α 在 0.6~0.8 区间秩相关都 > 0.95，说明排名对 α 不敏感，取 0.7 是稳健的；')
-    P('  · 若 λ 的秩相关随取值明显下降，说明 λ 是真正起作用的参数，那么正文里')
-    P('    “λ = 0.14 对应半衰期 4.95 年、与事业单位 5 年聘期一致”这条制度依据就成了')
-    P('    选参的正当理由，而不是事后凑的说法。')
+    P('  · α 在 0.6~0.8 区间秩相关若都 > 0.95，说明排名对 α 不敏感，取 0.7 是稳健的；')
+    P('  · 表 9 的“半衰期”一列只是 ln2/λ，即式(4) 单独的半衰期，**不是模型的实际')
+    P('    记忆长度**。实际记忆由 EWMA 主导，正文切勿把这一列当作系统的时效跨度；')
+    P('  · λ 若在整个扫描区间秩相关都很高，说明它对排名是二阶影响，其价值在于')
+    P('    刻画成果新旧的连续性而非调节排名，正文应据此定位，不要反过来当卖点；')
     P('  · 两张表合成一张折线图（横轴参数值、纵轴秩相关）比表格更直观。')
 
     txt = '\n'.join(out)
