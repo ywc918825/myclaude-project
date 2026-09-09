@@ -11,12 +11,23 @@
 
 输入 records.csv（一条行为积分一行）：
 
-    user_id,tag,points,year
-    U012,论文发表,20,2024
-    U012,课题主持,35,2022
+    user_id,tag,points,year,month
+    U012,论文发表,20,2024,3
+    U012,课题主持,35,2022,11
     ...
 
-    year   成果完成年度（式(4) 的 τ_i 取该年度末）
+    year    成果完成年度
+    month   成果完成月份，1—12，**可省略**
+
+**month 这一列为什么要紧**：式(4) 的 τ_now 取本周期期末、τ_i 取成果完成时间，
+而周期就是自然年度。若只精确到年，同一周期内 τ_now − τ_i 恒为 0，
+exp(−λ·0) ≡ 1，λ 取任何值都得到同一排名——λ 在模型中根本不起作用。
+只有精确到月，λ 才真正作用于"年内早发表 vs 晚发表"的差异（年内最大衰减
+1 − e^(−λ) ≈ 13%）。缺 month 时脚本按年中（第 6.5 月）统一处理，
+并会明确警告 λ 的敏感性结论不成立。
+
+跨年度的时效由式(5) 的 EWMA 承担，与 λ 无关：α = 0.7 时 j 年前的成果权重为
+α(1−α)^j，相对当年为 (1−α)^j，等效半衰期 ln0.5/ln(1−α) ≈ 0.58 年。
 
 用法：
     python3 参数敏感性分析.py records.csv --now 2025
@@ -56,17 +67,18 @@ def total_weight(rec, users, tags, alpha, lam, now, ymin):
     for y in range(ymin, now + 1):
         cur = defaultdict(float)              # (tag,user) -> 本年度衰减后积分之和
         smax = defaultdict(float)             # tag -> 本年度全中心最高原始积分
-        for (u, t, p, yy) in rec:
+        for (u, t, p, yy, frac) in rec:
             if yy != y:
                 continue
             smax[t] = max(smax[t], p)
-        for (u, t, p, yy) in rec:
+        for (u, t, p, yy, frac) in rec:
             if yy != y:
                 continue
             if smax[t] <= 0:
                 continue
-            # τ_now 取本周期期末，τ_i 取成果完成年度末 → 周期内衰减
-            decayed = p * math.exp(-lam * max(0, y - yy))
+            # τ_now 取本周期期末(y+1)，τ_i 取成果完成时刻(yy+frac) → 周期内衰减
+            age = max(0.0, (y + 1.0) - (yy + frac))
+            decayed = p * math.exp(-lam * age)
             cur[(t, u)] += decayed / smax[t]
         # 本年度行为项归一化到 [0,1]（Σw_i = 1，按人-标签内部等权）
         for key in set(list(cur.keys()) + list(W.keys())):
@@ -88,15 +100,22 @@ def main():
     ap.add_argument('--out', default='')
     a = ap.parse_args()
 
-    rec = []
+    rec, has_month = [], False
     with open(a.csv, newline='', encoding='utf-8-sig') as f:
         for r in csv.DictReader(f):
-            rec.append((r['user_id'], r['tag'], float(r['points']), int(r['year'])))
+            m = (r.get('month') or '').strip()
+            if m:
+                has_month = True
+                frac = (int(m) - 0.5) / 12.0     # 该月中点
+            else:
+                frac = 0.5                       # 缺失时按年中处理
+            rec.append((r['user_id'], r['tag'], float(r['points']),
+                        int(r['year']), frac))
     if not rec:
         sys.exit('没读到数据')
     users = sorted({u for u, *_ in rec})
     tags = sorted({t for _, t, *_ in rec})
-    ymin = min(y for *_, y in rec)
+    ymin = min(x[3] for x in rec)
     if len(users) < 5:
         sys.exit('样本太少（%d 人）' % len(users))
 
@@ -108,6 +127,11 @@ def main():
     P = out.append
     P('样本：%d 名科研人员，%d 个标签，%d 条行为积分，年度 %d–%d'
       % (len(users), len(tags), len(rec), ymin, a.now))
+    if not has_month:
+        P('')
+        P('⚠ 数据无 month 列，全部按年中处理 → 周期内成果龄期恒为 0.5 年，')
+        P('  λ 对排名的影响将退化为常数缩放，表 9 的秩相关必然恒为 1.0000，')
+        P('  该结果不能作为“λ 不敏感”的证据。请补 month 列后重跑。')
     P('')
 
     base = total_weight(rec, users, tags, A0, L0, a.now, ymin)
