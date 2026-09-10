@@ -95,6 +95,7 @@ for pat, name in ((r'[一-鿿],\s', 'CJK+半角逗号'), (r'[一-鿿];', 'CJK+�
                   # 标题与图表题的"编号+两空格+题名"是该刊体例，不算问题
                   (r'(?<![\d.])(?<!表\d)(?<!图\d)  +', '正文内连续空格')):
     src = re.sub(r'^(?:\d+(?:\.\d+)?|[图表]\s*\d+)  +', '', front, flags=re.M)
+    src = re.sub(r'[（;；]\s*\d+\.\s', '；', src)      # 单位署名 1. 2. 3. 体例
     hit = re.findall(pat, src)
     if hit:
         bad.append('%s ×%d' % (name, len(hit)))
