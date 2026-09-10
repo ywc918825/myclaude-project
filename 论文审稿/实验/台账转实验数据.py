@@ -34,26 +34,45 @@ from collections import Counter
 
 SEP = re.compile(r'[、;；,，/／\s]+')
 ALIAS = {
-    'title': ('成果名称', '成果', '题名', '名称', 'title', 'work', 'work_name'),
-    'authors': ('作者', '作者列表', '署名', 'authors', 'author'),
+    'title': ('成果名称', '题名', '名称', 'work_name', 'title', 'work'),
+    'authors': ('作者列表', '署名顺序', '作者', '署名', 'authors', 'author'),
     'corr': ('通讯作者', '通信作者', 'corresponding', 'corr'),
-    'points': ('标准积分', '积分', '分值', 'points', 'std_points', 'score'),
+    'points': ('标准积分', 'std_points', '积分', '分值', 'points', 'score'),
 }
+CN = {'title': '成果名称', 'authors': '作者', 'corr': '通讯作者', 'points': '标准积分'}
 
 
 def pick(header):
-    """把台账表头映射到四个逻辑字段。"""
-    got = {}
+    """把台账表头映射到四个逻辑字段。
+
+    表头常带补充说明（如"作者（按署名顺序，用、分隔）"），故用包含匹配而非全等。
+    按"精确优先、别名越长越优先"排序后贪心指派，避免"通讯作者"被 authors 的
+    别名"作者"抢走、"成果类型"被 title 抢走这类串台。
+    """
     low = {h: (h or '').strip().lower() for h in header}
+    cand = []
     for key, names in ALIAS.items():
-        for h in header:
-            if low[h] in [n.lower() for n in names]:
-                got[key] = h
-                break
-    missing = [k for k in ('title', 'authors', 'points') if k not in got]
+        for nm in names:
+            n = nm.lower()
+            for h in header:
+                if low[h] == n:
+                    cand.append((0, -len(n), key, h))
+                elif n in low[h]:
+                    cand.append((1, -len(n), key, h))
+    cand.sort()
+    got, used = {}, set()
+    for _, _, key, h in cand:
+        if key not in got and h not in used:
+            got[key], _ = h, used.add(h)
+
+    missing = [CN[k] for k in ('title', 'authors', 'points') if k not in got]
     if missing:
-        sys.exit('台账缺少必需列：%s\n实际表头：%s'
+        sys.exit('台账缺少必需列：%s\n实际表头：%s\n'
+                 '（表头可带括号说明，只要含"成果名称""作者""标准积分"字样即可）'
                  % ('、'.join(missing), '、'.join(header)))
+    print('表头识别：' + '，'.join('%s ← %s' % (CN[k], got[k])
+                                  for k in ('title', 'authors', 'corr', 'points')
+                                  if k in got))
     return got
 
 

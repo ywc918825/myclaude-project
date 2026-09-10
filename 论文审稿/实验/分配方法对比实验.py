@@ -134,21 +134,32 @@ def main():
         P('%-14s %s' % (n, ''.join(row)))
     P('')
 
-    # 差异到底出在谁身上——这是本文方法有没有价值的关键
+    # 差异到底出在谁身上——这是本文方法有没有价值的关键。
+    # 按中位数分组而非固定 50% 阈值：疾控成果绝大多数是合作完成的，
+    # 用固定阈值会把几乎所有人划进"协作型"，该表随即塌成一组、失去对比意义。
     frac = [multi[u] / total[u] if total[u] else 0 for u in users]
-    hi = [i for i, f in enumerate(frac) if f >= 0.5]
-    lo = [i for i, f in enumerate(frac) if f < 0.5]
+    sf = sorted(frac)
+    n = len(sf)
+    med = sf[n // 2] if n % 2 else (sf[n // 2 - 1] + sf[n // 2]) / 2
+    hi = [i for i, f in enumerate(frac) if f > med]
+    lo = [i for i, f in enumerate(frac) if f <= med]
+    if not hi or not lo:          # 全员占比相同（如人人都只有合著成果）
+        hi, lo = list(range(n)), []
     P('表 7  协作型与独立型科研人员的排名变动（本文方法 相对 均分法）')
+    P('分组依据：多作者成果积分占比的中位数 = %.2f' % med)
     P('%-24s %-10s %-16s %-12s' % ('人员分组', '人数', '平均排名变动', '上升人数占比'))
     pos = {u: i for i, u in enumerate(rank[base])}
     pos_e = {u: i for i, u in enumerate(rank['均分法'])}
-    for label, idxs in (('多作者成果占比 ≥ 50%', hi), ('多作者成果占比 < 50%', lo)):
+    for label, idxs in (('合作占比高于中位数', hi), ('合作占比不高于中位数', lo)):
         if not idxs:
+            P('%-24s %-10s %s' % (label, 0, '（无此分组，全员合作占比一致）'))
             continue
         d = [pos_e[i] - pos[i] for i in idxs]
         up = sum(1 for x in d if x > 0)
         P('%-24s %-10d %-16.1f %-12s'
           % (label, len(idxs), sum(d) / len(d), '%.0f%%' % (100 * up / len(idxs))))
+    P('')
+    P('注：排名变动为正表示在本文方法下名次上升（数值越大上升越多）。')
     P('')
     P('读法：秩相关高（> 0.9）说明本文方法没有把排序搞乱；Top-N 重合度中等、')
     P('且协作型人员系统性上升，才说明这个模型真的改变了什么、且改变的方向符合设计意图。')
