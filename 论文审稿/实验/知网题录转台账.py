@@ -71,9 +71,34 @@ def pick(header):
     return got
 
 
+def read_html_table(path):
+    """知网导出的 .xls 实为 HTML 表格，这里直接解析。"""
+    import html as _h
+    raw = open(path, encoding='utf-8', errors='replace').read()
+    rows = []
+    for tr in re.findall(r'<tr[^>]*>(.*?)</tr>', raw, re.S | re.I):
+        cells = [re.sub(r'<[^>]+>', '', c)
+                 for c in re.findall(r'<t[dh][^>]*>(.*?)</t[dh]>', tr, re.S | re.I)]
+        cells = [_h.unescape(c).replace('\xa0', ' ').strip() for c in cells]
+        if any(cells):
+            rows.append(cells)
+    return rows
+
+
 def read_table(path):
-    """读 xlsx 或 csv，返回 (表头, 数据行)。"""
-    if path.lower().endswith(('.xlsx', '.xlsm')):
+    """读 xlsx / csv / 知网 HTML-xls，返回 (表头, 数据行)。"""
+    low = path.lower()
+    if low.endswith(('.xls', '.htm', '.html')):
+        head = open(path, 'rb').read(8)
+        if head[:2] not in (b'PK',) and head != b'\xd0\xcf\x11\xe0\xa1\xb1\x1a\xe1':
+            rows = read_html_table(path)
+            if not rows:
+                sys.exit('%s 既不是 xlsx/csv，按 HTML 表格解析也没读到内容' % path)
+            print('（按知网 HTML-xls 格式解析，共 %d 行）' % len(rows))
+            return rows[0], rows[1:]
+        sys.exit('%s 是老式二进制 .xls，本环境无法读取。\n'
+                 '请在 Excel 里另存为 .xlsx 或 CSV（UTF-8）后重试。' % path)
+    if low.endswith(('.xlsx', '.xlsm')):
         from xlsx简易读取器 import load
         sheets = load(path)
         name, rows = sheets[0]

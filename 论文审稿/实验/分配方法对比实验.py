@@ -82,6 +82,9 @@ def main():
     ap.add_argument('csv')
     ap.add_argument('--topn', default='10,30')
     ap.add_argument('--out', default='')
+    ap.add_argument('--roster', default='',
+                    help='本中心人员名册(每行一个姓名)；给定时全部作者参与 n 的计算，\n'
+                         '但只对名册内人员排名——外单位合作者不进入本中心评价')
     a = ap.parse_args()
 
     works = defaultdict(list)
@@ -93,8 +96,9 @@ def main():
 
     # 每种方法下的个人总积分
     score = {name: defaultdict(float) for name, _ in METHODS}
-    multi = defaultdict(float)      # 多作者成果贡献占比
+    teamsum = defaultdict(float)    # 合作规模 n 的累计（按成果分值加权）
     total = defaultdict(float)
+    nwork = defaultdict(int)
     for wid, rows in works.items():
         n = len(rows)
         for uid, rank, corr, sp in rows:
@@ -102,10 +106,16 @@ def main():
             for name, fn in METHODS:
                 score[name][uid] += sp * fn(eff, n)
             total[uid] += sp
-            if n >= 3:
-                multi[uid] += sp
+            teamsum[uid] += n * sp
+            nwork[uid] += 1
 
     users = sorted(total)
+    if a.roster:
+        keep = {x.strip() for x in open(a.roster, encoding='utf-8') if x.strip()}
+        drop = [u for u in users if u not in keep]
+        users = [u for u in users if u in keep]
+        print('名册过滤：保留 %d 人，剔除 %d 位外单位作者（其署名仍计入作者总数 n）'
+              % (len(users), len(drop)))
     if len(users) < 5:
         sys.exit('样本太少（%d 人），至少要几十人才有统计意义' % len(users))
     cols = {name: [score[name][u] for u in users] for name, _ in METHODS}
@@ -135,9 +145,10 @@ def main():
     P('')
 
     # 差异到底出在谁身上——这是本文方法有没有价值的关键。
-    # 按中位数分组而非固定 50% 阈值：疾控成果绝大多数是合作完成的，
-    # 用固定阈值会把几乎所有人划进"协作型"，该表随即塌成一组、失去对比意义。
-    frac = [multi[u] / total[u] if total[u] else 0 for u in users]
+    # 按"人均合作规模"（成果的平均作者数）中位数分组，而不是"多作者成果占比"：
+    # 疾控成果绝大多数是 3 人以上合著，占比指标会全员饱和为 1.00、分组失效；
+    # 而名义分值制的受益程度本就随团队规模放大，合作规模才是对的自变量。
+    frac = [teamsum[u] / total[u] if total[u] else 0 for u in users]
     sf = sorted(frac)
     n = len(sf)
     med = sf[n // 2] if n % 2 else (sf[n // 2 - 1] + sf[n // 2]) / 2
@@ -145,12 +156,12 @@ def main():
     lo = [i for i, f in enumerate(frac) if f <= med]
     if not hi or not lo:          # 全员占比相同（如人人都只有合著成果）
         hi, lo = list(range(n)), []
-    P('表 7  协作型与独立型科研人员的排名变动（本文方法 相对 均分法）')
-    P('分组依据：多作者成果积分占比的中位数 = %.2f' % med)
+    P('表 7  不同合作规模科研人员的排名变动（本文方法 相对 均分法）')
+    P('分组依据：人均合作规模（成果平均作者数）的中位数 = %.2f 人' % med)
     P('%-24s %-10s %-16s %-12s' % ('人员分组', '人数', '平均排名变动', '上升人数占比'))
     pos = {u: i for i, u in enumerate(rank[base])}
     pos_e = {u: i for i, u in enumerate(rank['均分法'])}
-    for label, idxs in (('合作占比高于中位数', hi), ('合作占比不高于中位数', lo)):
+    for label, idxs in (('合作规模高于中位数', hi), ('合作规模不高于中位数', lo)):
         if not idxs:
             P('%-24s %-10s %s' % (label, 0, '（无此分组，全员合作占比一致）'))
             continue
@@ -162,7 +173,7 @@ def main():
     P('注：排名变动为正表示在本文方法下名次上升（数值越大上升越多）。')
     P('')
     P('读法：秩相关高（> 0.9）说明本文方法没有把排序搞乱；Top-N 重合度中等、')
-    P('且协作型人员系统性上升，才说明这个模型真的改变了什么、且改变的方向符合设计意图。')
+    P('且大团队协作者系统性上升，才说明这个模型真的改变了什么、且方向符合设计意图。')
     P('这两条同时成立，才是论文该报的结论。')
 
     txt = '\n'.join(out)
