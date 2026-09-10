@@ -3,6 +3,8 @@
 
 用浏览器加 CSS 滤镜截图会重新布局、把图例裁掉，所以这里直接按字节改：
 解 IDAT → 逐行反滤波 → 亮度换算 → 重新滤波压回去，尺寸与像素位置分毫不动。
+IHDR 原样保留（位深、色彩类型、隔行方式都不变），sRGB/gAMA/pHYs 等辅助区块
+也全部照抄——pHYs 存的是图像自带的 DPI，丢了就会被按默认 DPI 重新计算物理尺寸。
 
 亮度用 Rec.601（0.299/0.587/0.114）。雷达图三条线原本靠颜色区分，
 转灰度后深蓝→深灰、绿→中灰、橙→浅灰，再叠加原有的实线/虚线/点线，
@@ -71,13 +73,15 @@ def to_gray(src, dst, gamma=1.0):
     data = open(src, 'rb').read()
     idat = b''
     hdr = None
-    keep = []
+    keep = []           # IDAT/IEND 以外的区块一律原样留下，顺序不变
+    sizes = []          # 原 IDAT 的分块大小，照抄回去
     for typ, pay in chunks(data):
         if typ == b'IHDR':
             hdr = pay
         elif typ == b'IDAT':
             idat += pay
-        elif typ in (b'PLTE', b'tRNS'):
+            sizes.append(len(pay))
+        elif typ != b'IEND':
             keep.append((typ, pay))
     w, h, depth, ctype, comp, filt, inter = struct.unpack('>IIBBBBB', hdr)
     assert depth == 8 and inter == 0 and ctype in (2, 6), (depth, ctype, inter)
@@ -88,12 +92,16 @@ def to_gray(src, dst, gamma=1.0):
         if gamma != 1.0:
             g = int(255 * (g / 255.0) ** gamma + 0.5)
         px[i] = px[i + 1] = px[i + 2] = min(255, max(0, g))
-    out = bytearray(b'\x89PNG\r\n\x1a\x1a'.replace(b'\x1a\x1a', b'\x1a\n'))
+    out = bytearray(b'\x89PNG\r\n\x1a\n')
     out += mk(b'IHDR', hdr)
     for typ, pay in keep:
         out += mk(typ, pay)
-    out += mk(b'IDAT', zlib.compress(refilter(px, w, h, bpp), 9))
+    body = zlib.compress(refilter(px, w, h, bpp), 9)
+    step = sizes[0] if len(sizes) > 1 else len(body)
+    for i in range(0, len(body), step) if step else [0]:
+        out += mk(b'IDAT', body[i:i + step])
     out += mk(b'IEND', b'')
+    print('  保留区块：%s' % (', '.join(t.decode() for t, _ in keep) or '无'))
     open(dst, 'wb').write(bytes(out))
     print('%s → %s  %dx%d  色彩类型 %d  %d bytes' % (src, dst, w, h, ctype, len(out)))
 
