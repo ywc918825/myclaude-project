@@ -1,0 +1,1114 @@
+<title>科研积分系统论文审稿意见</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700;900&family=Noto+Serif+SC:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+
+<style>
+/* ── tokens: light is the base, both dark scopes redefine only tokens ───── */
+:root {
+  color-scheme: light;
+  --plane:      #f6f7f9;
+  --surface:    #ffffff;
+  --surface-2:  #f0f2f6;
+  --ink:        #14181f;
+  --ink-2:      #525c6b;
+  --ink-3:      #8a94a3;
+  --rule:       #dfe3e9;
+  --rule-soft:  #ebeef2;
+  --accent:     #1b3a5c;
+  --accent-tint:#e8eef5;
+
+  /* data ramp — validated ordinal, one hue, monotone L */
+  --d-lo:  #86b6ef;
+  --d-mid: #3987e5;
+  --d-hi:  #184f95;
+  --track: #e6e9ee;
+
+  /* status — fixed, never themed; always shipped with a text label */
+  --crit:   #d03b3b;
+  --serious:#ec835a;
+  --good:   #0ca30c;
+  --crit-bg:   #fbecec;
+  --serious-bg:#fdf0e9;
+  --good-bg:   #e8f5e8;
+  --accent-bg: #eaf0f7;
+
+  --shadow: 0 1px 2px rgba(20,24,31,.05), 0 8px 24px -12px rgba(20,24,31,.12);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --plane:      #0e1116;
+    --surface:    #171b22;
+    --surface-2:  #1e232c;
+    --ink:        #e7eaef;
+    --ink-2:      #a8b2c0;
+    --ink-3:      #7a8598;
+    --rule:       #29303b;
+    --rule-soft:  #21262f;
+    --accent:     #8fb4dc;
+    --accent-tint:#1d2836;
+
+    --d-lo:  #184f95;
+    --d-mid: #2a78d6;
+    --d-hi:  #9ec5f4;
+    --track: #262c36;
+
+    --crit-bg:   #2c1b1c;
+    --serious-bg:#2e2119;
+    --good-bg:   #16281a;
+    --accent-bg: #1a2431;
+
+    --shadow: 0 1px 2px rgba(0,0,0,.4), 0 8px 24px -12px rgba(0,0,0,.6);
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --plane:      #0e1116;
+  --surface:    #171b22;
+  --surface-2:  #1e232c;
+  --ink:        #e7eaef;
+  --ink-2:      #a8b2c0;
+  --ink-3:      #7a8598;
+  --rule:       #29303b;
+  --rule-soft:  #21262f;
+  --accent:     #8fb4dc;
+  --accent-tint:#1d2836;
+
+  --d-lo:  #184f95;
+  --d-mid: #2a78d6;
+  --d-hi:  #9ec5f4;
+  --track: #262c36;
+
+  --crit-bg:   #2c1b1c;
+  --serious-bg:#2e2119;
+  --good-bg:   #16281a;
+  --accent-bg: #1a2431;
+
+  --shadow: 0 1px 2px rgba(0,0,0,.4), 0 8px 24px -12px rgba(0,0,0,.6);
+}
+
+/* ── base ───────────────────────────────────────────────────────────────── */
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: var(--plane);
+  color: var(--ink);
+  font-family: "Noto Serif SC", Songti SC, SimSun, Georgia, serif;
+  font-size: 16.5px;
+  line-height: 1.9;
+  -webkit-font-smoothing: antialiased;
+}
+.sans { font-family: "Noto Sans SC", "PingFang SC", "Microsoft YaHei", system-ui, sans-serif; }
+.mono { font-family: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace; }
+
+.wrap {
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 0 24px 96px;
+}
+
+h1, h2, h3, h4, .chip, .lede, th, .meta, .id, .sev, .num {
+  font-family: "Noto Sans SC", "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+}
+h1, h2, h3, h4 { text-wrap: balance; margin: 0; }
+
+p { margin: 0 0 .85em; }
+p:last-child { margin-bottom: 0; }
+a { color: var(--accent); }
+
+/* ── masthead ───────────────────────────────────────────────────────────── */
+.masthead {
+  border-bottom: 2px solid var(--ink);
+  padding: 56px 0 20px;
+  margin-bottom: 32px;
+}
+.eyebrow {
+  font-family: "Noto Sans SC", system-ui, sans-serif;
+  font-size: 12px; font-weight: 700;
+  letter-spacing: .22em;
+  color: var(--accent);
+  margin-bottom: 18px;
+}
+.masthead h1 {
+  font-size: clamp(26px, 4.4vw, 38px);
+  font-weight: 900;
+  line-height: 1.32;
+  letter-spacing: -.01em;
+  margin-bottom: 14px;
+}
+.masthead .sub {
+  font-size: 15px;
+  color: var(--ink-2);
+  line-height: 1.75;
+}
+.metagrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 14px 28px;
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 1px solid var(--rule);
+}
+.meta .k {
+  font-size: 11px; font-weight: 700; letter-spacing: .14em;
+  color: var(--ink-3); text-transform: uppercase;
+}
+.meta .v { font-size: 14.5px; font-weight: 500; color: var(--ink); line-height: 1.55; margin-top: 3px; }
+
+/* ── section headings ───────────────────────────────────────────────────── */
+section { margin-top: 56px; scroll-margin-top: 20px; }
+.sechead {
+  display: flex; align-items: baseline; gap: 14px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--ink);
+  margin-bottom: 28px;
+}
+.sechead .n {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 13px; font-weight: 600;
+  color: var(--accent);
+  letter-spacing: .04em;
+  flex: none;
+}
+.sechead h2 { font-size: 21px; font-weight: 700; letter-spacing: -.005em; }
+.sechead .tail {
+  margin-left: auto; flex: none;
+  font-family: "Noto Sans SC", system-ui, sans-serif;
+  font-size: 12.5px; color: var(--ink-3); font-weight: 500;
+}
+h3.sub3 {
+  font-size: 16.5px; font-weight: 700;
+  margin: 34px 0 14px;
+  padding-left: 11px;
+  border-left: 3px solid var(--accent);
+}
+
+/* ── verdict ────────────────────────────────────────────────────────────── */
+.verdict {
+  background: var(--surface);
+  border: 1px solid var(--rule);
+  border-radius: 3px;
+  box-shadow: var(--shadow);
+  overflow: hidden;
+}
+.verdict-top {
+  padding: 26px 28px 24px;
+  border-bottom: 1px solid var(--rule-soft);
+}
+.verdict-label {
+  font-family: "Noto Sans SC", system-ui, sans-serif;
+  font-size: 11px; font-weight: 700; letter-spacing: .2em;
+  color: var(--ink-3); margin-bottom: 12px;
+}
+.verdict-call {
+  font-family: "Noto Sans SC", system-ui, sans-serif;
+  font-size: clamp(22px, 3.4vw, 27px); font-weight: 900;
+  line-height: 1.4; letter-spacing: -.01em; margin-bottom: 12px;
+}
+.verdict-call .en {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: .58em; font-weight: 500; color: var(--ink-3);
+  letter-spacing: .02em; margin-left: 10px; white-space: nowrap;
+}
+.verdict-top p { font-size: 15.5px; color: var(--ink-2); }
+
+/* ── range chart ────────────────────────────────────────────────────────── */
+.chart { padding: 26px 28px 22px; }
+.chart-title {
+  font-family: "Noto Sans SC", system-ui, sans-serif;
+  font-size: 14.5px; font-weight: 700; margin-bottom: 4px;
+}
+.chart-note {
+  font-family: "Noto Sans SC", system-ui, sans-serif;
+  font-size: 12.5px; color: var(--ink-3); margin-bottom: 22px; line-height: 1.6;
+}
+.rows { display: flex; flex-direction: column; gap: 20px; }
+.row-label {
+  font-family: "Noto Sans SC", system-ui, sans-serif;
+  font-size: 13.5px; font-weight: 500; color: var(--ink);
+  margin-bottom: 7px;
+  display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+}
+.row-label .stage {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 11px; font-weight: 600; color: var(--ink-3);
+}
+.pill-rec {
+  font-size: 10.5px; font-weight: 700; letter-spacing: .08em;
+  color: var(--accent); background: var(--accent-bg);
+  border-radius: 2px; padding: 2px 7px;
+}
+.gauge {
+  position: relative;
+  height: 20px;
+  background: var(--track);
+  border-radius: 4px;
+}
+.bar {
+  position: absolute; top: 0; height: 20px;
+  border-radius: 4px;
+  outline: none;
+  transition: filter .15s ease;
+}
+.bar:hover, .bar:focus-visible { filter: brightness(1.08); }
+.bar:focus-visible { box-shadow: 0 0 0 2px var(--surface), 0 0 0 4px var(--accent); }
+.bar[data-step="1"] { background: var(--d-lo); }
+.bar[data-step="2"] { background: var(--d-mid); }
+.bar[data-step="3"] { background: var(--d-hi); }
+.bar .tip {
+  position: absolute; bottom: calc(100% + 9px); left: 50%;
+  transform: translateX(-50%);
+  font-family: "Noto Sans SC", system-ui, sans-serif;
+  font-size: 12px; line-height: 1.55; font-weight: 500;
+  color: var(--surface); background: var(--ink);
+  padding: 7px 11px; border-radius: 3px;
+  white-space: nowrap;
+  opacity: 0; pointer-events: none;
+  transition: opacity .14s ease;
+  z-index: 5;
+}
+.bar:hover .tip, .bar:focus-visible .tip { opacity: 1; }
+.row-val {
+  font-family: "IBM Plex Mono", monospace;
+  font-variant-numeric: tabular-nums;
+  font-size: 12.5px; font-weight: 600; color: var(--ink-2);
+  margin-top: 7px;
+}
+.axis {
+  position: relative; height: 20px; margin-top: 14px;
+  border-top: 1px solid var(--rule);
+}
+.axis span {
+  position: absolute; top: 5px; transform: translateX(-50%);
+  font-family: "IBM Plex Mono", monospace;
+  font-variant-numeric: tabular-nums;
+  font-size: 11px; color: var(--ink-3);
+}
+
+/* ── meters ─────────────────────────────────────────────────────────────── */
+.meters { display: flex; flex-direction: column; gap: 0; }
+.meter {
+  display: grid;
+  grid-template-columns: 128px 1fr auto;
+  align-items: center;
+  gap: 16px;
+  padding: 13px 0;
+  border-bottom: 1px solid var(--rule-soft);
+}
+.meter:last-child { border-bottom: 0; }
+.meter .mname {
+  font-family: "Noto Sans SC", system-ui, sans-serif;
+  font-size: 13.5px; font-weight: 500;
+}
+.mtrack {
+  position: relative; height: 8px;
+  background: var(--track); border-radius: 4px;
+}
+.mfill {
+  position: absolute; left: 0; top: 0; height: 8px;
+  border-radius: 4px; background: var(--d-mid);
+}
+.mfill.is-crit { background: var(--crit); }
+.mverdict {
+  font-family: "Noto Sans SC", system-ui, sans-serif;
+  font-size: 12.5px; color: var(--ink-2); white-space: nowrap;
+}
+.mverdict b { color: var(--crit); font-weight: 700; }
+.mscore {
+  font-family: "IBM Plex Mono", monospace;
+  font-variant-numeric: tabular-nums;
+  font-size: 12px; color: var(--ink-3); margin-right: 4px;
+}
+
+/* ── finding cards ──────────────────────────────────────────────────────── */
+.finding {
+  background: var(--surface);
+  border: 1px solid var(--rule);
+  border-radius: 3px;
+  padding: 22px 24px;
+  margin-bottom: 16px;
+}
+.fhead { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 12px; }
+.id {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 12px; font-weight: 600;
+  color: var(--surface); background: var(--accent);
+  padding: 3px 8px; border-radius: 2px; letter-spacing: .03em;
+}
+.sev {
+  font-size: 11px; font-weight: 700; letter-spacing: .08em;
+  padding: 3px 8px; border-radius: 2px;
+}
+.sev-must  { color: var(--crit);    background: var(--crit-bg); }
+.sev-should{ color: var(--serious); background: var(--serious-bg); }
+.sev-plus  { color: var(--good);    background: var(--good-bg); }
+.finding h4 { font-size: 16px; font-weight: 700; line-height: 1.5; width: 100%; }
+.finding > p, .finding li { font-size: 15.5px; }
+
+.label-in {
+  font-family: "Noto Sans SC", system-ui, sans-serif;
+  font-size: 11.5px; font-weight: 700; letter-spacing: .1em;
+  color: var(--ink-3);
+  margin: 16px 0 7px;
+}
+.fix {
+  background: var(--surface-2);
+  border-left: 3px solid var(--accent);
+  border-radius: 0 3px 3px 0;
+  padding: 14px 18px;
+  margin-top: 14px;
+}
+.fix .label-in { margin-top: 0; color: var(--accent); }
+
+ul, ol { margin: 0 0 .85em; padding-left: 1.35em; }
+li { margin-bottom: .4em; }
+li:last-child { margin-bottom: 0; }
+ul.tight li, ol.tight li { margin-bottom: .25em; }
+
+code, .code {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: .88em;
+  background: var(--surface-2);
+  padding: .12em .38em;
+  border-radius: 2px;
+}
+.formula {
+  display: block;
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 14px; line-height: 1.7;
+  background: var(--surface-2);
+  border: 1px solid var(--rule-soft);
+  border-radius: 3px;
+  padding: 13px 16px;
+  margin: 12px 0;
+  overflow-x: auto;
+  white-space: nowrap;
+}
+.bad  { color: var(--crit); font-weight: 500; }
+.wrong-right { display: grid; gap: 8px; margin: 12px 0; }
+.wr {
+  display: grid; grid-template-columns: 60px 1fr; gap: 12px;
+  font-size: 14.5px; align-items: start;
+}
+.wr .tag {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 11px; font-weight: 600; letter-spacing: .04em;
+  padding: 2px 0; text-align: right;
+}
+.wr.x .tag { color: var(--crit); }
+.wr.o .tag { color: var(--good); }
+
+/* ── tables ─────────────────────────────────────────────────────────────── */
+.tscroll { overflow-x: auto; margin: 16px 0; }
+table {
+  width: 100%; border-collapse: collapse;
+  font-family: "Noto Sans SC", system-ui, sans-serif;
+  font-size: 13.5px;
+  min-width: 480px;
+}
+caption {
+  font-family: "Noto Sans SC", system-ui, sans-serif;
+  font-size: 12.5px; font-weight: 500; color: var(--ink-3);
+  text-align: left; padding-bottom: 9px;
+}
+th {
+  text-align: left; font-weight: 700; font-size: 12px;
+  letter-spacing: .06em; color: var(--ink-2);
+  border-bottom: 1.5px solid var(--ink);
+  padding: 9px 12px 9px 0;
+}
+td {
+  padding: 10px 12px 10px 0;
+  border-bottom: 1px solid var(--rule-soft);
+  vertical-align: top; line-height: 1.65;
+}
+td.n, th.n {
+  text-align: right; white-space: nowrap;
+  font-family: "IBM Plex Mono", monospace;
+  font-variant-numeric: tabular-nums;
+}
+/* only a trailing numeric column loses its gutter */
+td.n:last-child, th.n:last-child { padding-right: 0; }
+table.cols3 td.n, table.cols3 th.n { width: 92px; padding-right: 22px; }
+th:first-child, td:first-child { padding-right: 18px; }
+table.cols4 { min-width: 620px; }
+table.cols4 td:first-child, table.cols4 th:first-child { width: 108px; }
+table.cols3 { min-width: 560px; }
+table.cols3 td:first-child, table.cols3 th:first-child { width: 152px; white-space: nowrap; }
+table.refs td:first-child, table.refs th:first-child { width: 52px; white-space: nowrap; }
+tr.hl td { background: var(--accent-bg); font-weight: 500; }
+
+/* ── checklist ──────────────────────────────────────────────────────────── */
+.tier {
+  background: var(--surface);
+  border: 1px solid var(--rule);
+  border-radius: 3px;
+  margin-bottom: 16px;
+  overflow: hidden;
+}
+.tier-head {
+  display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap;
+  padding: 16px 22px;
+  border-bottom: 1px solid var(--rule-soft);
+  background: var(--surface-2);
+}
+.tier-n {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 12px; font-weight: 600; color: var(--surface);
+  background: var(--ink); padding: 3px 8px; border-radius: 2px;
+}
+.tier-head h4 { font-size: 15.5px; font-weight: 700; }
+.tier-head .cost {
+  margin-left: auto;
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 12px; color: var(--ink-3);
+}
+.tier ul { list-style: none; padding: 14px 22px 18px; margin: 0; }
+.tier li {
+  position: relative;
+  padding-left: 26px;
+  font-family: "Noto Sans SC", system-ui, sans-serif;
+  font-size: 14.5px; line-height: 1.72;
+  margin-bottom: .5em;
+}
+.tier li::before {
+  content: ""; position: absolute; left: 0; top: .5em;
+  width: 13px; height: 13px;
+  border: 1.5px solid var(--ink-3);
+  border-radius: 2px;
+}
+.tier li .ref {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 11px; color: var(--accent);
+  margin-left: 5px;
+}
+
+.callout {
+  background: var(--accent-tint);
+  border: 1px solid var(--rule);
+  border-radius: 3px;
+  padding: 18px 22px;
+  margin: 20px 0;
+  font-size: 15.5px;
+}
+.callout .label-in { margin-top: 0; color: var(--accent); }
+
+footer {
+  margin-top: 64px; padding-top: 22px;
+  border-top: 1px solid var(--rule);
+  font-family: "Noto Sans SC", system-ui, sans-serif;
+  font-size: 12.5px; color: var(--ink-3); line-height: 1.8;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * { transition: none !important; animation: none !important; }
+}
+@media (max-width: 620px) {
+  body { font-size: 15.5px; }
+  .wrap { padding: 0 18px 72px; }
+  .meter { grid-template-columns: 100px 1fr; row-gap: 8px; }
+  .meter .mverdict { grid-column: 1 / -1; }
+  .verdict-top, .chart { padding-left: 20px; padding-right: 20px; }
+}
+</style>
+
+<div class="wrap">
+
+<header class="masthead">
+  <div class="eyebrow">同行评议意见书 · PEER REVIEW</div>
+  <h1>《基于动态积分与标签画像的科研评价系统设计与实现》审稿意见</h1>
+  <p class="sub">拟投期刊：《微型电脑应用》（ISSN 1007-757X，CN 31-1634/TP）<br>
+  稿件概况：正文约 4,500 汉字（不含参考文献），6 章、9 图、0 表、34 个公式对象、18 条参考文献</p>
+  <div class="metagrid">
+    <div class="meta"><div class="k">审稿结论</div><div class="v">退修后可录用</div></div>
+    <div class="meta"><div class="k">必改项</div><div class="v">7 项（M1–M7）</div></div>
+    <div class="meta"><div class="k">建议项</div><div class="v">19 项（S/T/R）</div></div>
+    <div class="meta"><div class="k">预计修改周期</div><div class="v">6–10 个工作日</div></div>
+  </div>
+</header>
+
+<div class="verdict">
+  <div class="verdict-top">
+    <div class="verdict-label">总体判断</div>
+    <div class="verdict-call">退修后可录用<span class="en">Major Revision</span></div>
+    <p>选题与该刊高度契合、系统真实上线、技术方案完整——这三点决定了稿件的底子是好的。但目前<strong>零验证章节</strong>、<strong>多处数据自相矛盾</strong>、<strong>一条算法推导链断裂</strong>，加上英文摘要等硬性要件缺失，按现状直投存在在编辑部初审阶段就被退回的风险。所有问题均属可修复类，没有方法论层面的致命错误。</p>
+  </div>
+
+  <div class="chart">
+    <div class="chart-title">三种投稿路径的最终录用概率</div>
+    <div class="chart-note">区间为经验判断，非精确统计；含 1–2 轮退修后的最终录用。悬停查看依据。</div>
+
+    <div class="rows">
+      <div>
+        <div class="row-label"><span class="stage">路径 A</span>按现状直投</div>
+        <div class="gauge">
+          <div class="bar" data-step="1" style="left:45%;width:15%;" tabindex="0" role="img"
+               aria-label="按现状直投，最终录用概率 45% 到 60%">
+            <span class="tip">45–60%　几乎必然 2 轮以上退修<br>另有初审因格式退回的风险</span>
+          </div>
+        </div>
+        <div class="row-val">45 – 60%</div>
+      </div>
+
+      <div>
+        <div class="row-label"><span class="stage">路径 B</span>完成必改项 M1–M7 与参考文献规范
+          <span class="pill-rec">推荐下限</span></div>
+        <div class="gauge">
+          <div class="bar" data-step="2" style="left:80%;width:8%;" tabindex="0" role="img"
+               aria-label="完成必改项后，最终录用概率 80% 到 88%">
+            <span class="tip">80–88%　补齐验证章节与格式要件<br>是概率跃升的主因</span>
+          </div>
+        </div>
+        <div class="row-val">80 – 88%</div>
+      </div>
+
+      <div>
+        <div class="row-label"><span class="stage">路径 C</span>再完成创新性提升三条</div>
+        <div class="gauge">
+          <div class="bar" data-step="3" style="left:88%;width:4%;" tabindex="0" role="img"
+               aria-label="再完成创新性提升后，最终录用概率 88% 到 92%">
+            <span class="tip">88–92%　从"工作总结"升级为<br>"有验证的工程研究"</span>
+          </div>
+        </div>
+        <div class="row-val">88 – 92%</div>
+      </div>
+    </div>
+
+    <div class="axis" aria-hidden="true">
+      <span style="left:0%">0</span>
+      <span style="left:25%">25</span>
+      <span style="left:50%">50</span>
+      <span style="left:75%">75</span>
+      <span style="left:100%">100%</span>
+    </div>
+  </div>
+</div>
+
+<section id="scores">
+  <div class="sechead">
+    <span class="n">00</span>
+    <h2>七维度评估</h2>
+    <span class="tail">满分 5</span>
+  </div>
+
+  <div class="meters">
+    <div class="meter">
+      <div class="mname">选题与刊物匹配</div>
+      <div class="mtrack"><div class="mfill" style="width:100%"></div></div>
+      <div class="mverdict"><span class="mscore">5/5</span>典型稿型</div>
+    </div>
+    <div class="meter">
+      <div class="mname">应用背景真实性</div>
+      <div class="mtrack"><div class="mfill" style="width:100%"></div></div>
+      <div class="mverdict"><span class="mscore">5/5</span>真实上线，加分</div>
+    </div>
+    <div class="meter">
+      <div class="mname">技术方案完整性</div>
+      <div class="mtrack"><div class="mfill" style="width:80%"></div></div>
+      <div class="mverdict"><span class="mscore">4/5</span>架构模块交代清楚</div>
+    </div>
+    <div class="meter">
+      <div class="mname">语言与结构</div>
+      <div class="mtrack"><div class="mfill" style="width:60%"></div></div>
+      <div class="mverdict"><span class="mscore">3/5</span>口语化、超长段落</div>
+    </div>
+    <div class="meter">
+      <div class="mname">学术规范</div>
+      <div class="mtrack"><div class="mfill" style="width:40%"></div></div>
+      <div class="mverdict"><span class="mscore">2/5</span>硬性要件缺失</div>
+    </div>
+    <div class="meter">
+      <div class="mname">创新性</div>
+      <div class="mtrack"><div class="mfill" style="width:40%"></div></div>
+      <div class="mverdict"><span class="mscore">2/5</span>缺对比与参数标定</div>
+    </div>
+    <div class="meter">
+      <div class="mname">实验与验证</div>
+      <div class="mtrack"><div class="mfill is-crit" style="width:20%"></div></div>
+      <div class="mverdict"><span class="mscore">1/5</span><b>最大短板</b>，目前为零</div>
+    </div>
+  </div>
+
+  <div class="callout">
+    <div class="label-in">关键判断</div>
+    <p>该刊的门槛主要不在创新性高度，而在<strong>规范性与工程完整度</strong>。上面两项低分（学术规范、实验验证）恰好是最容易补的两项——这就是路径 A 到路径 B 概率跃升 30 个百分点的原因。</p>
+  </div>
+</section>
+
+<section id="must">
+  <div class="sechead">
+    <span class="n">01</span>
+    <h2>必须修改</h2>
+    <span class="tail">M1–M7 · 不改会反复退修</span>
+  </div>
+
+  <div class="finding">
+    <div class="fhead"><span class="id">M1</span><span class="sev sev-must">必改 · 最严重</span>
+      <h4>全文没有"系统测试与应用效果"章节</h4></div>
+    <p>6 个章节全部是设计描述，验证为零。摘要里那几个漂亮数字——"响应时间小于 1 秒""差错率由 5% 降至 0""审核周期由 5 天缩短至 1 天"——在正文中<strong>没有任何出处、测量方法或样本量</strong>。审稿人对"设计与实现"类稿件的第一个问题永远是"效果怎么验证的"，目前这篇论文答不上来。</p>
+    <div class="fix">
+      <div class="label-in">修改方案</div>
+      <p>在结论前新增一章（建议 1200–1500 字），至少包含四张表：</p>
+      <ul class="tight">
+        <li><strong>测试环境表</strong>：CPU / 内存 / 操作系统 / JDK / MySQL / Redis 版本、部署方式</li>
+        <li><strong>功能测试表</strong>：按 5 大模块列 20–30 条用例与通过率</li>
+        <li><strong>性能测试表</strong>：JMeter 并发 50/100/200/500 下的平均响应时间、95% 响应时间、TPS、错误率、CPU 与内存占用；并做 <strong>Redis 开 / 关对比</strong>——这一列数据能直接把第 4 章的缓存论述坐实</li>
+        <li><strong>应用效果对比表</strong>：上线前 3 个月 vs 上线后 3 个月的申报量、平均审核周期、超时单量、核算差错数，注明数据来源为系统日志与科研管理台账</li>
+      </ul>
+      <p style="margin-top:.85em">另外，把"有比较高的标签命中率"这句无数据的表述替换掉：随机抽取 50–100 名人员，由 3 名科研管理专家人工标注作为金标准，报告标签准确率 / 召回率 / F1 与 Kappa 一致性系数。</p>
+    </div>
+  </div>
+
+  <div class="finding">
+    <div class="fhead"><span class="id">M2</span><span class="sev sev-must">必改</span>
+      <h4>五处数据自相矛盾，审稿人对照即可发现</h4></div>
+    <div class="tscroll">
+      <table class="cols4">
+        <caption>正文中相互冲突的数据</caption>
+        <thead><tr><th>项目</th><th>出处 A</th><th>出处 B</th><th>处理</th></tr></thead>
+        <tbody>
+          <tr class="hl"><td>审核周期</td><td>摘要：5 天 → 1 天（降 80%）</td><td>结论：缩短三分之一（降 33%）</td><td>统一，并说明是均值还是中位数、统计区间、样本单数</td></tr>
+          <tr><td>能力维度数</td><td>5.3 节：D = 16</td><td>图 4.2 报告页："指标完成 10/19"</td><td>统一为一个数，并用表格列出完整维度清单</td></tr>
+          <tr><td>维度名称</td><td>图 4.2 上半："16 维能力雷达图"（专利发明、发表论文…）</td><td>图 4.2 下半雷达图（基本信息、教育背景、工作经历…）</td><td>两套命名完全不同，须统一</td></tr>
+          <tr><td>人员规模</td><td>摘要：270 名科研人员</td><td>2 节：数百名科研人员</td><td>统一为 270 名</td></tr>
+          <tr><td>响应时间</td><td>2 节设计指标：3 秒以内</td><td>摘要实测：小于 1 秒</td><td>不矛盾，但须在测试章节写明"设计指标 3 s / 实测均值 ××× ms"</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p>此外 5.3 节"每年衰减约 14%"在数值上不准确：λ = 0.14 时 <code>e^(−0.14) = 0.8694</code>，实际年衰减 13.06%；半衰期 <code>ln2/0.14 = 4.95 年</code>（这部分是对的）。</p>
+    <div class="wrong-right">
+      <div class="wr x"><span class="tag">原文</span><span>每年衰减约 14%，一项成果在约 5 年后当量权重衰减至最初的一半</span></div>
+      <div class="wr o"><span class="tag">建议</span><span>衰减系数 λ = 0.14/年，对应半衰期约 4.95 年，成果权重每年降至上年的 86.9%</span></div>
+    </div>
+  </div>
+
+  <div class="finding">
+    <div class="fhead"><span class="id">M3</span><span class="sev sev-must">必改 · 学术硬伤</span>
+      <h4>5.3 节能力得分算法的推导链是断的</h4></div>
+    <p>论文给出三个步骤，但第三步和前两步<strong>用的是两条互不相干的数据通路</strong>：</p>
+    <span class="formula">① C(d,u) = Σ_t [ W(t,u) × m(t,d) ]      ← 输入是标签权重 W</span>
+    <span class="formula">② C'(d,u) = (C - C_min)/(C_max - C_min) × 100  ← 归一化</span>
+    <span class="formula">③ C_final(d,u) = Σ_k(s_k·w_k) / Σ_k(w_k)     ← 输入变成了成果积分 s_k</span>
+    <p>被称为"最终得分"的 ③ 根本没有用到 ①② 的结果。也就是说，5.3 节实际上给了两套彼此独立的能力得分公式，而正文把它们当成一条链在叙述。这是审稿人会明确指出的逻辑问题。</p>
+    <div class="fix">
+      <div class="label-in">修改方案 A（推荐）</div>
+      <p>把时间衰减<strong>前移到标签权重层</strong>：在 5.2 节计算 W 时，对每笔积分先乘衰减因子</p>
+      <span class="formula">W(t,u) = α · Σ_i [ s(i,u) · e^(−λ(t_now − t_i)) · w_i ] / Z + β · W_old(t,u)</span>
+      <p>然后 ①→② 保持不变。这样 5.2 与 5.3 自然衔接，得分链条统一，公式数量还少了一条。</p>
+      <div class="label-in">修改方案 B</div>
+      <p>保留 ③，但明确把 ①② 定位为"标签维度得分（供标签云使用）"、③ 为"能力维度得分（供雷达图使用）"，并说明两者用途与数据来源的差异。</p>
+    </div>
+    <p style="margin-top:14px">还有一个会被追问的设计取舍：③ 是<strong>加权平均</strong>（分母有 Σw_k），意味着成果越多得分不一定越高——多而旧的成果会把均值拉低，这与"积分激励产出"的导向相冲突。若确实要用加权平均，请在文中解释理由；若想体现产出总量，应改为加权求和 <code>Σ(s_k · w_k)</code>。</p>
+  </div>
+
+  <div class="finding">
+    <div class="fhead"><span class="id">M4</span><span class="sev sev-must">必改</span>
+      <h4>5.2 节标签权重公式量纲不一致</h4></div>
+    <span class="formula">W(t,u) = α · Σ_i [ s(i,u) × w_i ] + β · W_old(t,u)　　α=0.7, β=0.3</span>
+    <p>第一项是"积分 × 贡献系数"的累加，<strong>无上界，量纲是分</strong>；第二项是上一周期的权重，应当是 [0,1] 区间的无量纲量。两个不同量纲的量按 α+β=1 加权相加，数学上不成立。后文"对权重低于 0.1 的标签自动清理"进一步说明作者默认 W ∈ [0,1]，但公式产出的并不是这个范围。</p>
+    <div class="fix">
+      <div class="label-in">修改方案</div>
+      <p>对行为项做归一化。令 <code>s̃(i,u) = s(i,u)/S_max</code>（S_max 取该周期全中心该标签下的最高行为积分，或该标签的年度积分上限），并约束 <code>Σ_i w_i = 1</code>，则：</p>
+      <span class="formula">W⁽ᵏ⁾(t,u) = α · Σ_i [ s̃(i,u) · w_i ] + (1−α) · W⁽ᵏ⁻¹⁾(t,u)，　α = 0.7</span>
+      <p>同时点明这是<strong>一阶指数加权移动平均（EWMA）</strong>，α = 0.7 对应记忆长度约 <code>1/(1−α) ≈ 3.3</code> 个周期。这样"近期占 70%、历史占 30%"才有数学依据，也顺带回答了"参数怎么定的"。</p>
+      <p style="margin-top:.85em"><strong>加分做法：</strong>补一个小实验——取 α ∈ {0.5, 0.6, 0.7, 0.8, 0.9}，看人才排名的 Spearman 秩相关如何变化，说明 0.7 的稳健性。这是把"经验取值"变成"实验标定"最省力的办法，审稿人很吃这一套。</p>
+    </div>
+  </div>
+
+  <div class="finding">
+    <div class="fhead"><span class="id">M5</span><span class="sev sev-must">必改 · 最易被质疑</span>
+      <h4>多作者积分分配的权重和大于 1，且 Kronecker δ 只是形式包装</h4></div>
+    <span class="formula">S_i = S_total × (0.2 + 0.8·δ(i,1) + 0.6·δ(i,2) + 0.3·δ(i,3))</span>
+    <p>展开后就是一张查找表：第 1 作者 1.0、第 2 作者 0.8、第 3 作者 0.5、第 4 及以后 0.2。用 Kronecker δ 写出来<strong>并不增加算法内涵</strong>，反而容易让审稿人觉得是在包装。</p>
+    <p>更要紧的是：n = 4 时全体作者合计拿到 <span class="bad">2.5 倍 S_total</span>，n = 6 时 2.9 倍。<strong>积分总量随作者数膨胀</strong>，客观上激励"多挂名"，与"破四唯、重实质贡献"的立意相反。这是本文最可能被质疑的一点。</p>
+    <div class="tscroll">
+      <table>
+        <caption>建议补入正文的对比表（4 位作者情形）</caption>
+        <thead><tr><th>分配方法</th><th class="n">第 1</th><th class="n">第 2</th><th class="n">第 3</th><th class="n">第 4</th><th class="n">合计</th></tr></thead>
+        <tbody>
+          <tr><td>均分法 1/n</td><td class="n">0.25</td><td class="n">0.25</td><td class="n">0.25</td><td class="n">0.25</td><td class="n">1.00</td></tr>
+          <tr><td>调和计数法</td><td class="n">0.48</td><td class="n">0.24</td><td class="n">0.16</td><td class="n">0.12</td><td class="n">1.00</td></tr>
+          <tr><td>算术递减法</td><td class="n">0.40</td><td class="n">0.30</td><td class="n">0.20</td><td class="n">0.10</td><td class="n">1.00</td></tr>
+          <tr class="hl"><td>本文分段权重法</td><td class="n">1.00</td><td class="n">0.80</td><td class="n">0.50</td><td class="n">0.20</td><td class="n">2.50</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="fix">
+      <div class="label-in">修改方案（三选一，可组合）</div>
+      <ul class="tight">
+        <li>说明这是<strong>名义分值制</strong>而非总量守恒制，并给出配套约束（年度上限已封顶、非前三作者不计入职称评审口径等）——承认不守恒，但有制度兜底</li>
+        <li>提供可配置的归一化模式 <code>S_i = S_total · v_i / Σ_j v_j</code>，两种模式由管理员切换</li>
+        <li>把上表放进正文并说明选择理由</li>
+      </ul>
+      <p style="margin-top:.85em">加上这张表之后，"创新性"反而立住了——你是在已知方法谱系里做了一个有制度意图的选择，而不是随手拍了几个系数。</p>
+      <p><strong>另需补充：</strong>现在只按作者序位分配，未处理<strong>通讯作者、共同第一作者、本单位/外单位</strong>等情形，而这些在疾控科研中很普遍。哪怕只加一句"通讯作者按第 1 作者计"也比不提要好。</p>
+    </div>
+  </div>
+
+  <div class="finding">
+    <div class="fhead"><span class="id">M6</span><span class="sev sev-must">必改</span>
+      <h4>min-max 归一化的三个缺陷，图 4.2 已经暴露了</h4></div>
+    <ul>
+      <li><strong>分母为零。</strong>当某维度全中心得分相同（新设维度、冷门维度）时 C_max = C_min，公式除零。需加保护：分母为 0 时取 50，或加 ε 平滑。</li>
+      <li><strong>极值敏感、大量零分。</strong>图 4.2 的雷达图里"工作经历 / 学术影响力 / 团队建设 / 科普贡献"全部是 0%，雷达图退化成尖刺。全中心最低分者在每个维度恒为 0，画像失去区分度，也打击积极性。建议改用分位数归一化，或 min-max 后线性映射到 [20, 100]。</li>
+      <li><strong>纵向不可比。</strong>C_min / C_max 随人员流动与年度产出漂移，同一人跨年度的画像无法比较，与"动态反映最新能力状态"的目标直接冲突。建议固定基准（如以上线首年的分布为基准）或改用绝对分档。</li>
+    </ul>
+    <p>把这三条主动写进论文并给出处理方式，是明确的加分项——说明作者清楚自己方法的边界。</p>
+  </div>
+
+  <div class="finding">
+    <div class="fhead"><span class="id">M7</span><span class="sev sev-must">必改 · 不补会被初审退回</span>
+      <h4>期刊格式硬性要件缺失</h4></div>
+    <ul class="tight">
+      <li>缺<strong>英文题名、英文作者名（拼音）、英文单位、英文摘要、英文关键词</strong></li>
+      <li>缺<strong>中图分类号</strong>（建议 TP311.5；也可并列 R197.2）</li>
+      <li>缺<strong>文献标识码</strong>（A）</li>
+      <li>缺<strong>作者简介</strong>（姓名、出生年、性别、籍贯、职称/学历、研究方向、E-mail）</li>
+      <li>缺<strong>基金项目</strong>——若有市级或省级卫健委课题务必标注，有基金会明显提高录用优先级</li>
+      <li>署名"杨文超¹ ² *"标了两个单位上标，正文却只列了 1 个单位；单作者情形下通讯作者标记"*"也是多余的</li>
+      <li>摘要被拆成了两个自然段（"…基于 SpringBoot" / "+MyBatis 的…"），须合并为一段</li>
+    </ul>
+    <p style="margin-top:.85em">这一条是<strong>路径 A 的主要风险来源</strong>：格式不全可能在编辑部初审阶段就被退回，不占审稿名额，白白损失 2–4 周。</p>
+  </div>
+</section>
+
+<section id="structure">
+  <div class="sechead">
+    <span class="n">02</span>
+    <h2>结构与写作</h2>
+    <span class="tail">S1–S8 · 决定审稿评价高低</span>
+  </div>
+
+  <div class="finding">
+    <div class="fhead"><span class="id">S1–S2</span><span class="sev sev-should">建议</span>
+      <h4>篇幅偏短，章节配比失衡</h4></div>
+    <p>正文（不含参考文献）约 4,500 汉字，对"设计与实现"类论文偏薄，5,000–7,000 字较稳妥。补上测试章节后篇幅自然到位。</p>
+    <div class="tscroll">
+      <table class="cols4">
+        <caption>各章节现有篇幅与建议篇幅（字符数）</caption>
+        <thead><tr><th>章节</th><th class="n">现有</th><th class="n">建议</th><th>处理</th></tr></thead>
+        <tbody>
+          <tr><td>1 引言</td><td class="n">243</td><td class="n">600–800</td><td>见 S3，须大幅扩写</td></tr>
+          <tr><td>2 系统需求分析</td><td class="n">308</td><td class="n">≈400</td><td>可与引言部分内容合并压缩</td></tr>
+          <tr><td>3 系统总体架构</td><td class="n">647</td><td class="n">保持</td><td>—</td></tr>
+          <tr><td>4 核心功能模块</td><td class="n">1007</td><td class="n">保持</td><td>见 S4，须拆分小节</td></tr>
+          <tr><td>5 关键技术实现</td><td class="n">2993</td><td class="n">保持</td><td>核心章节，篇幅合适</td></tr>
+          <tr class="hl"><td>6 系统测试与应用效果</td><td class="n">0</td><td class="n">1200–1500</td><td>新增（M1）</td></tr>
+          <tr><td>7 结论与展望</td><td class="n">308</td><td class="n">≈400</td><td>见 S5</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="finding">
+    <div class="fhead"><span class="id">S3</span><span class="sev sev-should">建议</span>
+      <h4>引言太薄（243 字）</h4></div>
+    <p>目前只有"背景 + 一句现状 + 本文做了什么"。需要补三块内容：<strong>分点梳理国内外研究现状</strong>（科研评价量化 / 人才画像与标签体系 / 科研院所管理系统实践，每类举 2–3 篇代表文献并指出局限）、<strong>显式列举贡献</strong>、<strong>本文组织结构</strong>。</p>
+    <div class="fix">
+      <div class="label-in">贡献点建议这样提炼</div>
+      <ol class="tight">
+        <li>提出面向多作者科研成果的<strong>分段权重积分分配模型</strong>，并给出与均分法、调和计数法的对比分析；</li>
+        <li>构建"<strong>EWMA 标签权重 + 指数时间衰减</strong>"双机制动态画像模型，实现能力标签的自动演进与失效清理；</li>
+        <li>实现<strong>无第三方依赖的状态机工作流引擎与可配置积分规则引擎</strong>，规则变更零发布，并在 270 人规模的疾控机构完成 3 个月实际验证。</li>
+      </ol>
+    </div>
+  </div>
+
+  <div class="finding">
+    <div class="fhead"><span class="id">S4</span><span class="sev sev-should">建议</span>
+      <h4>第 4 章是一个 1000 余字的超长单段</h4></div>
+    <p>一段里塞了 5 个功能模块 + Redis 缓存策略 + 数据库调优，可读性差；标题"核心功能模块与安全性能设计"也与内容不匹配。</p>
+    <div class="fix">
+      <div class="label-in">重构方案</div>
+      <p><strong>第 4 章</strong>拆为 4.1 积分管理 / 4.2 人才画像 / 4.3 统计分析 / 4.4 申报审核 / 4.5 系统管理与权限。</p>
+      <p><strong>把 Redis 缓存策略、Cache-Aside、缓存穿透与击穿处理、索引与 InnoDB 调优移到第 5 章</strong>，新设"5.5 性能优化与安全设计"——它们属于关键技术实现，不属于功能模块。</p>
+    </div>
+  </div>
+
+  <div class="finding">
+    <div class="fhead"><span class="id">S5–S6</span><span class="sev sev-should">建议</span>
+      <h4>结论引入新内容；全文术语不统一</h4></div>
+    <p><strong>S5：</strong>结论出现了正文从未描述过的"移动端申报与审核入口"。结论不应引入新信息——若移动端确实是系统的一部分，应在第 3、4 章中描述并在图 2 技术架构图中体现；否则从结论中删除。</p>
+    <p><strong>S6：</strong>标题写"科研评价系统"、摘要写"科研积分系统"、正文与结论写"科研积分管理系统"。全文统一为<strong>科研积分管理系统</strong>。</p>
+    <div class="fix">
+      <div class="label-in">标题也建议改</div>
+      <p>把应用领域放进标题，能提高检索命中率和领域贡献辨识度：</p>
+      <div class="wrong-right" style="margin-bottom:0">
+        <div class="wr x"><span class="tag">现有</span><span>基于动态积分与标签画像的科研评价系统设计与实现</span></div>
+        <div class="wr o"><span class="tag">建议</span><span>面向疾控机构的科研积分管理系统设计与实现<br><span style="color:var(--ink-3);font-size:.92em">或：基于动态积分与标签画像的疾控科研人才评价系统设计与实现</span></span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="finding">
+    <div class="fhead"><span class="id">S7</span><span class="sev sev-should">建议</span>
+      <h4>口语化与第一人称过多</h4></div>
+    <p>"我们采用""以前的规则调整需要改代码重新发布""彻底解决…痛点""大大缩短""比较高的"——学术论文宜用第三人称客观陈述。</p>
+    <div class="wrong-right">
+      <div class="wr x"><span class="tag">原文</span><span>后端框架我们采用 Spring Boot 技术</span></div>
+      <div class="wr o"><span class="tag">改为</span><span>后端采用 Spring Boot 框架</span></div>
+      <div class="wr x"><span class="tag">原文</span><span>彻底解决修改规则必须重新发布新版本的痛点</span></div>
+      <div class="wr o"><span class="tag">改为</span><span>使积分规则变更无需重新编译部署</span></div>
+      <div class="wr x"><span class="tag">原文</span><span>查询响应时间大大缩短</span></div>
+      <div class="wr o"><span class="tag">改为</span><span>查询平均响应时间由 ×× ms 降至 ×× ms（配测试数据）</span></div>
+      <div class="wr x"><span class="tag">原文</span><span>该系统有效解决了疾控机构科研评价的量化与动态化难题</span></div>
+      <div class="wr o"><span class="tag">改为</span><span>该系统为疾控机构科研评价的量化与动态化提供了可行的技术方案</span></div>
+    </div>
+    <p style="font-size:14.5px;color:var(--ink-2)">最后一条尤其重要：摘要中的绝对化表述是编辑部最常动手改的地方，自己先改掉更好。</p>
+  </div>
+
+  <div class="finding">
+    <div class="fhead"><span class="id">S8</span><span class="sev sev-should">建议</span>
+      <h4>错别字与标点</h4></div>
+    <ul class="tight">
+      <li>5.2 节"本系统采用两种<span class="bad">跟新</span>策略" → <strong>更新</strong></li>
+      <li>5.3 节"为所有标签<span class="bad">权限</span>的加权和" → <strong>权重</strong></li>
+      <li>5.3 节"直观<span class="bad">的</span>呈现" → 直观<strong>地</strong>呈现；"充分<span class="bad">反应</span>了人才的发展曲线" → <strong>反映</strong></li>
+      <li>4 节"优化<span class="bad">␣</span>了 InnoDB 引擎配置"——汉字间多余空格</li>
+      <li>摘要"系统架构<span class="bad">,</span> 构建"——半角逗号加空格，改全角</li>
+      <li>5.3 节"呈现<span class="bad">'</span>先高后低<span class="bad">'</span>的规律"——英文单引号，改中文引号</li>
+    </ul>
+  </div>
+</section>
+
+<section id="figures">
+  <div class="sechead">
+    <span class="n">03</span>
+    <h2>图表规范</h2>
+    <span class="tail">T1–T6 · 全文零表格是明显短板</span>
+  </div>
+
+  <div class="finding">
+    <div class="fhead"><span class="id">T1–T2</span><span class="sev sev-must">必改</span>
+      <h4>图编号不连续；正文残留大量空段落</h4></div>
+    <p>现有编号为"图 1、图 2、图 3、图 4.1、图 4.2"，应改为<strong>图 1 至图 5</strong> 连续编号；图题格式也不统一（"图 4.2"前有多余空格，"图3"后有三个空格）。</p>
+    <p>另外，图 1 后有 10 个空段落、图 2 前有 4 个——这是排版残留，投稿前须清理。</p>
+  </div>
+
+  <div class="finding">
+    <div class="fhead"><span class="id">T3</span><span class="sev sev-must">必改</span>
+      <h4>图 4.1 在双栏排版下不可用</h4></div>
+    <p>原图 2500 × 2233 px，采用 4 条<strong>横向</strong>泳道。该刊为 A4 双栏排版，单栏图宽通常约 8 cm——这张图缩到 8 cm 后，泳道内的文字将完全不可读。</p>
+    <div class="fix">
+      <div class="label-in">修改方案</div>
+      <p>改为纵向布局；或拆为"数据处理流程"与"标签演进流程"两张图；或简化为 3 层结构后申请通栏排版（约 16 cm）。</p>
+    </div>
+  </div>
+
+  <div class="finding">
+    <div class="fhead"><span class="id">T4</span><span class="sev sev-should">建议</span>
+      <h4>界面截图未脱敏</h4></div>
+    <p>图 4.2 含真实姓名"杨文超"、科室"科研与质量管理科"及机构 LOGO。虽是作者本人，仍建议改为"张××"或"测试用户"，并在文中注明"界面数据已脱敏处理"。</p>
+    <p>系统涉及 270 名科研人员的学历、职称、成果数据，建议在系统管理模块或结论中补一句<strong>数据安全与个人信息保护的合规说明</strong>（《个人信息保护法》）。在公共卫生领域投稿，这是加分项。</p>
+  </div>
+
+  <div class="finding">
+    <div class="fhead"><span class="id">T5</span><span class="sev sev-must">必改</span>
+      <h4>全文零表格</h4></div>
+    <p>这是"设计与实现"类论文的明显短板，期刊排版也偏好图表并重。建议至少补 6 张：</p>
+    <ol class="tight">
+      <li>积分规则配置示例（12 大类 46 项节选，含分值、年度上限、有效期）</li>
+      <li>核心数据表结构（<code>points_category</code> / <code>points_item</code> / <code>points_record</code> 字段说明）</li>
+      <li>多作者积分分配方法对比（见 M5）</li>
+      <li>能力维度定义与标签映射清单（顺便解决 M2 的维度数不一致）</li>
+      <li>测试环境与性能测试结果（M1）</li>
+      <li>上线前后应用效果对比（M1）</li>
+    </ol>
+    <p style="margin-top:.85em">额外建议：5.4 节的 7 种状态 × 7 种事件目前是纯文字描述，做成<strong>状态转换矩阵表</strong>既清晰，也直观体现技术含量。</p>
+  </div>
+
+  <div class="finding">
+    <div class="fhead"><span class="id">T6</span><span class="sev sev-must">必改</span>
+      <h4>公式全部未编号，核心公式行内排版</h4></div>
+    <p>好消息是公式确实用 Word 公式编辑器排的（共 34 个公式对象），不是图片，这点没问题。但两个问题必须改：</p>
+    <ul class="tight">
+      <li>5.1 的多作者分配式与 5.2 的标签权重式被<strong>嵌在正文段落中间行内排版</strong>，应独立成行、居中；</li>
+      <li><strong>所有公式均无编号</strong>。须统一编号为式(1)…式(n)，右端对齐，正文用"由式(3)可得"的方式引用。</li>
+    </ul>
+  </div>
+</section>
+
+<section id="refs">
+  <div class="sechead">
+    <span class="n">04</span>
+    <h2>参考文献</h2>
+    <span class="tail">R1–R5 · 18 条中 8 条有格式错误</span>
+  </div>
+
+  <div class="finding">
+    <div class="fhead"><span class="id">R1</span><span class="sev sev-must">必改</span>
+      <h4>逐条格式错误</h4></div>
+    <div class="tscroll">
+      <table class="refs">
+        <caption>需按 GB/T 7714—2015 修正的条目</caption>
+        <thead><tr><th style="width:44px">条目</th><th>问题</th><th>修正</th></tr></thead>
+        <tbody>
+          <tr><td>[3]</td><td>期刊名重复："…European universities. Scientometrics [J]. Scientometrics, 2024…"</td><td>删去前一个</td></tr>
+          <tr><td>[5]</td><td>同样重复："…industrial IoT. IEEE Internet of Things Journal [J]. IEEE Internet of Things Journal…"</td><td>删去前一个</td></tr>
+          <tr><td>[4]</td><td>中英文标点混用："2025，3(9), 16-31"</td><td>"2025, 3(9): 16-31"</td></tr>
+          <tr><td>[9]</td><td>列了 4 位作者又加"等"</td><td>"罗仕鉴, 郭和睿, 钟素萍, 等."（前 3 位后加"等"）</td></tr>
+          <tr><td>[10]</td><td>缺卷号："计算机科学, 2026(05):79-89"</td><td>"2026, 53(5): 79-89"</td></tr>
+          <tr><td>[11]</td><td>缺句点与期号："通信学报2024(45):153-159"</td><td>"通信学报, 2024, 45(×): 153-159"</td></tr>
+          <tr><td>[17]</td><td>空格与标点混乱："2026 ,53 (01) : 77-88"</td><td>"2026, 53(1): 77-88"</td></tr>
+          <tr><td>[18]</td><td>序号后缺空格："[18]朱嘉杰"</td><td>"[18] 朱嘉杰"</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p>另外中文文献作者分隔符不统一：[1]"李涛, 关健"用逗号加空格，[6]"刘盛,王占云"无空格。全文统一，中文条目用全角标点、英文条目用半角。</p>
+  </div>
+
+  <div class="finding">
+    <div class="fhead"><span class="id">R2–R3</span><span class="sev sev-must">必改</span>
+      <h4>相关性偏弱，且缺关键领域文献</h4></div>
+    <p><strong>建议删减：</strong>[12][14]（IoT 场景 RBAC）、[16] kRedis 多租户缓存分区、[17] 持久内存 B+ 树索引，与本文实际技术深度关联很弱——本文只是用了 Redis 和常规索引，引用这些高阶研究反而显得"凑引用"，审稿人认真核查时会扣分。</p>
+    <p><strong>建议补充 4–6 条：</strong>本文核心是"科研评价"，但该领域文献只有 [1][2][3][4] 四条，且 [3][4] 是高校语境。</p>
+    <ul class="tight">
+      <li>破"四唯"与科技人才分类评价政策研究（《中国科技论坛》《科研管理》《科学学研究》）</li>
+      <li>医疗卫生机构与疾控机构科研管理信息化实践（《中华医学科研管理杂志》《中国卫生信息管理杂志》）</li>
+      <li>作者贡献度与科研产出计量分配方法——直接支撑 M5 的对比表</li>
+      <li><strong>《微型电脑应用》自身近两年的 1–2 篇相关论文</strong>——这是提高录用率的实操技巧，也能证明选题与刊物方向契合</li>
+    </ul>
+  </div>
+
+  <div class="finding">
+    <div class="fhead"><span class="id">R4–R5</span><span class="sev sev-should">建议</span>
+      <h4>时效性核查与引用位置核对</h4></div>
+    <p><strong>R4：</strong>[2][8][10][17][18] 标注为 2026 年。若为网络首发（尚无正式卷期页码），须按网络首发格式标注 DOI 与首发日期，否则编辑部核查时会认为文献信息有误。请逐条核对。</p>
+    <p><strong>R5：</strong>第 4 章一个段落里出现 [8-9][9-10][18][15][11-14][16][17] 共 7 处引用，密度过高且部分位置与论述不对应——例如"人才晴雨表仪表盘集成 ECharts"后引 [18]，而 [18] 是"基于 Flask 框架的保密知识测试系统"，关联性存疑。<strong>逐处核对引文与论述的对应关系</strong>，这是审稿人抽查的重点。</p>
+  </div>
+</section>
+
+<section id="novelty">
+  <div class="sechead">
+    <span class="n">05</span>
+    <h2>创新性提升三条</h2>
+    <span class="tail">从"工作总结"到"有验证的工程研究"</span>
+  </div>
+
+  <p style="margin-bottom:22px">当前论文的创新性表述偏弱——通篇是"我们做了什么"，缺"为什么这样做更好"。三个低成本、高回报的动作：</p>
+
+  <div class="finding">
+    <div class="fhead"><span class="id">N1</span><span class="sev sev-plus">加分</span>
+      <h4>加上 M5 的方法对比表</h4></div>
+    <p>让分段权重法处在已知方法谱系里，创新点立刻可辨识。成本：半天，纯写作，不需要新数据。</p>
+  </div>
+
+  <div class="finding">
+    <div class="fhead"><span class="id">N2</span><span class="sev sev-plus">加分</span>
+      <h4>做 α 与 λ 的参数敏感性分析</h4></div>
+    <p>一张折线图加一段分析，把"经验取值"升级为"实验标定"。这是审稿人最认可的改动，也直接回应"参数怎么定的"这个必被追问的问题。成本：1 天，数据从现有积分流水里就能算。</p>
+  </div>
+
+  <div class="finding">
+    <div class="fhead"><span class="id">N3</span><span class="sev sev-plus">加分</span>
+      <h4>补消融式对比实验</h4></div>
+    <p>Redis 缓存开 / 关的响应时间对比、全量更新 vs 准实时更新的时延对比。数据从现有系统日志里就能捞，成本极低，但能把第 4、5 章的技术论述<strong>全部坐实</strong>。</p>
+  </div>
+
+  <div class="callout">
+    <p>做完这三件事，论文就从"工作总结"变成了"有验证的工程研究"——这是该刊质量分档的分水岭，也是路径 B 到路径 C 的差别所在。</p>
+  </div>
+</section>
+
+<section id="probability">
+  <div class="sechead">
+    <span class="n">06</span>
+    <h2>投中概率详析</h2>
+    <span class="tail">经验判断，非精确统计</span>
+  </div>
+
+  <div class="tscroll">
+    <table class="cols3">
+      <caption>三种路径的概率与主要风险</caption>
+      <thead><tr><th>路径</th><th class="n">录用概率</th><th>主要风险 / 说明</th></tr></thead>
+      <tbody>
+        <tr><td>A · 按现状直投</td><td class="n">45–60%</td><td>几乎不可能一次通过，大概率 2 轮以上退修；<strong>另有因格式要件缺失被编辑部初审直接退回的风险</strong>——这一步就可能卡掉，且不占审稿名额</td></tr>
+        <tr class="hl"><td>B · 完成 M1–M7 + 参考文献规范</td><td class="n">80–88%</td><td>补齐验证章节与格式要件是概率跃升的主因</td></tr>
+        <tr><td>C · 再完成创新性三条</td><td class="n">88–92%</td><td>审稿意见的措辞会明显更好，退修轮次也更少</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3 class="sub3">判断依据</h3>
+  <p>该刊以计算机应用技术、行业信息系统的设计与实现为主要刊载方向，本文属于其典型稿型；真实机构、真实上线、真实界面截图在这类刊物是明显加分项。而本文的"硬伤"——缺测试数据、格式不全、公式未编号、参考文献格式错误——<strong>全部属于可修复类</strong>，没有方法论层面的致命错误，也没有伦理或数据真实性问题。因此修改到位后录用概率相当高。</p>
+  <p>反过来说，现状直投的主要损失不是被拒，而是<strong>在初审阶段被退回、白白损失 2–4 周</strong>，然后你还是要做同样的修改。</p>
+
+  <h3 class="sub3">三点需要说明的不确定性</h3>
+  <ol>
+    <li>上述概率是基于稿件质量与该刊稿型匹配度的<strong>经验判断，不是精确统计</strong>。编辑部的组稿计划、当期版面安排、审稿人个体差异都会影响结果。</li>
+    <li>投稿前请以<strong>编辑部官网或投稿系统的最新《投稿须知》为准</strong>核对格式要件（英文摘要、中图分类号、作者简介、字数与图表规范）。本文列出的是国内科技期刊的通行要求，具体细则可能有出入。</li>
+    <li>该刊为收取版面费的正式期刊，已被知网收录，但<strong>目前不属于北大核心 / CSCD / 科技核心目录</strong>。如果你的职称评审明确要求核心期刊，需提前确认是否符合；若只要求"公开发表的正式期刊"，该刊是合适且高效的选择。</li>
+  </ol>
+</section>
+
+<section id="checklist">
+  <div class="sechead">
+    <span class="n">07</span>
+    <h2>修改优先级清单</h2>
+    <span class="tail">按投入产出排序</span>
+  </div>
+
+  <div class="tier">
+    <div class="tier-head">
+      <span class="tier-n">优先级 1</span>
+      <h4>不做无法投稿</h4>
+      <span class="cost">1–2 天</span>
+    </div>
+    <ul>
+      <li>补英文题名、英文摘要、英文关键词、中图分类号 TP311.5、文献标识码 A、作者简介、基金项目 <span class="ref">M7</span></li>
+      <li>修正署名与单位标注，去掉多余的上标 2 和通讯作者星号 <span class="ref">M7</span></li>
+      <li>合并被拆分的摘要段落，全文统一全角标点 <span class="ref">M7 S8</span></li>
+      <li>所有公式独立成行、居中、编号式(1)–式(n)，正文加交叉引用 <span class="ref">T6</span></li>
+      <li>图重新编号为图 1–图 5，清理图前后的空段落 <span class="ref">T1 T2</span></li>
+      <li>按 GB/T 7714—2015 重排全部参考文献，修正 8 处格式错误 <span class="ref">R1</span></li>
+    </ul>
+  </div>
+
+  <div class="tier">
+    <div class="tier-head">
+      <span class="tier-n">优先级 2</span>
+      <h4>决定录用与否</h4>
+      <span class="cost">3–5 天</span>
+    </div>
+    <ul>
+      <li>新增"系统测试与应用效果"一章，含测试环境、功能测试、性能测试、效果对比四张表 <span class="ref">M1</span></li>
+      <li>统一所有矛盾数据：审核周期、能力维度数、人员规模、响应时间 <span class="ref">M2</span></li>
+      <li>修复 5.3 节算法推导链断裂，建议采用方案 A（衰减前移到标签权重层） <span class="ref">M3</span></li>
+      <li>为 5.2 公式补归一化项，说明其 EWMA 性质与记忆长度 <span class="ref">M4</span></li>
+      <li>加入多作者分配方法对比表，正面回应权重和大于 1 的问题 <span class="ref">M5</span></li>
+      <li>补充通讯作者、共同第一作者的积分处理规则 <span class="ref">M5</span></li>
+      <li>说明 min-max 归一化的除零保护与区分度处理 <span class="ref">M6</span></li>
+      <li>用专家标注实测标签准确率，替换"比较高的标签命中率" <span class="ref">M1</span></li>
+      <li>补 6 张表格，含状态转换矩阵 <span class="ref">T5</span></li>
+      <li>重绘图 4.1 为纵向或拆分，界面截图脱敏 <span class="ref">T3 T4</span></li>
+    </ul>
+  </div>
+
+  <div class="tier">
+    <div class="tier-head">
+      <span class="tier-n">优先级 3</span>
+      <h4>决定审稿评价高低</h4>
+      <span class="cost">2–3 天</span>
+    </div>
+    <ul>
+      <li>引言扩写至 600–800 字，显式列出 3 条贡献与组织结构 <span class="ref">S3</span></li>
+      <li>第 4 章拆分为 4.1–4.5，性能与安全内容移入第 5 章 <span class="ref">S4</span></li>
+      <li>α 与 λ 参数敏感性分析，一图一表 <span class="ref">N2</span></li>
+      <li>Redis 开 / 关、全量 / 准实时更新的对比实验 <span class="ref">N3</span></li>
+      <li>补 4–6 条科研评价领域文献及 1–2 条本刊文献，删减关联弱的 [12][14][16][17] <span class="ref">R2 R3</span></li>
+      <li>核对第 4 章 7 处引用与论述的对应关系 <span class="ref">R5</span></li>
+      <li>全文去口语化，术语统一为"科研积分管理系统"，标题加领域限定 <span class="ref">S6 S7</span></li>
+      <li>从结论中删除移动端内容，或补入正文与图 2 <span class="ref">S5</span></li>
+      <li>修正错别字：跟新 → 更新，权限 → 权重，反应 → 反映 <span class="ref">S8</span></li>
+      <li>补一句数据安全与个人信息保护合规说明 <span class="ref">T4</span></li>
+    </ul>
+  </div>
+</section>
+
+<footer>
+  审稿依据：稿件全文（正文 4,516 汉字、9 图、34 个公式对象、18 条参考文献）逐节核对，含公式推导、图文数据一致性与引文位置核查。<br>
+  概率评估为基于稿件质量与刊物稿型匹配度的经验判断，不构成录用承诺；投稿格式请以编辑部最新《投稿须知》为准。
+</footer>
+
+</div>

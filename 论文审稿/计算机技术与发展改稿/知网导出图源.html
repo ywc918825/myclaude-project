@@ -1,0 +1,65 @@
+<meta charset="utf-8">
+<style>
+ body{margin:0;background:#fff;font:15px/1.75 "Noto Sans CJK SC","Source Han Sans SC",sans-serif;color:#16191d}
+ .w{width:1120px;padding:28px 34px}
+ h1{font-size:21px;margin:0 0 4px}
+ .sub{color:#666;font-size:13.5px;margin:0 0 20px}
+ .warn{background:#fff8e6;border-left:4px solid #e0a800;padding:9px 13px;font-size:13.5px;margin:0 0 22px;border-radius:0 4px 4px 0}
+ .step{display:flex;gap:13px;margin-bottom:13px;align-items:flex-start}
+ .num{flex:0 0 30px;height:30px;border-radius:50%;background:#1a56a8;color:#fff;
+      font-weight:700;font-size:14px;display:flex;align-items:center;justify-content:center;margin-top:2px}
+ .bd{flex:1;border:1px solid #dde1e6;border-radius:6px;padding:10px 14px;background:#fbfcfd}
+ .t{font-weight:600;font-size:15px}
+ .d{color:#4a5259;font-size:13.5px;margin-top:3px}
+ code{background:#eef1f5;padding:1.5px 6px;border-radius:3px;font-family:Consolas,Menlo,monospace;font-size:13px}
+ .btn{display:inline-block;background:#1a56a8;color:#fff;padding:1.5px 9px;border-radius:3px;font-size:13px;font-weight:600}
+ .fld{display:inline-block;background:#fff;border:1.5px solid #1a56a8;color:#1a56a8;padding:1px 8px;border-radius:3px;font-size:13px;font-weight:600}
+ .loop{background:#eef6ee;border-color:#8fbf8f}
+ .done{background:#eef4fb;border-color:#9bb8dc}
+ .note{font-size:13px;color:#666;margin-top:20px;border-top:1px solid #e3e6ea;padding-top:13px}
+ b{color:#c0392b}
+</style>
+<div class="w">
+<h1>知网机构题录导出 · 12 步</h1>
+<p class="sub">目的：拿到本中心论文的<b>完整作者列表及署名顺序</b>——这是实验一唯一缺的东西，你的佐证材料档案里没有。</p>
+<div class="warn">下面写的是<b>要找的按钮名称</b>，不是知网界面截图。知网改版时位置可能变，但这几个名称一直沿用。</div>
+
+<div class="step"><div class="num">1</div><div class="bd"><div class="t">打开 <code>kns.cnki.net</code></div>
+<div class="d">看右上角有没有显示单位名。没有就用单位图书馆账号登录。只导题录、不下全文，一般不需要额外权限。</div></div></div>
+
+<div class="step"><div class="num">2</div><div class="bd"><div class="t">点搜索框右侧的 <span class="btn">高级检索</span></div></div></div>
+
+<div class="step"><div class="num">3</div><div class="bd"><div class="t">第一个条件的下拉框：<span class="fld">主题</span> 改成 <span class="fld">作者单位</span></div>
+<div class="d">输入框填 <code>南通市疾病预防控制中心</code><br>
+再点 <span class="btn">+</span> 加一行，下拉<b>仍选作者单位</b>，两行关系选 <span class="fld">或</span>，填 <code>南通市疾控中心</code>
+—— 有些论文署的是简称，这样一次捞全。</div></div></div>
+
+<div class="step"><div class="num">4</div><div class="bd"><div class="t">发表时间填 <code>2024-01-01</code> 到 <code>2025-12-31</code></div>
+<div class="d">先只导这两年。你档案里 202 篇正好是这两年的，可以拿来核对捞全没有。不够再往前扩。</div></div></div>
+
+<div class="step"><div class="num">5</div><div class="bd"><div class="t">点 <span class="btn">检索</span></div></div></div>
+
+<div class="step"><div class="num">6</div><div class="bd"><div class="t">结果页右上角「每页显示」改成 <span class="fld">50</span></div>
+<div class="d">普通账号单次最多导 50 条，每页 50 正好一页导一次。</div></div></div>
+
+<div class="step"><div class="num">7</div><div class="bd"><div class="t">点结果列表<b>表头那一行最左边的复选框</b></div>
+<div class="d">本页 50 条全被勾上。</div></div></div>
+
+<div class="step"><div class="num">8</div><div class="bd"><div class="t">列表上方 <span class="btn">导出与分析</span> → <span class="btn">导出文献</span></div></div></div>
+
+<div class="step"><div class="num">9</div><div class="bd"><div class="t">左侧格式列表选 <span class="fld">自定义</span>，勾这四项：</div>
+<div class="d"><span class="fld">题名</span> <span class="fld">作者</span> <span class="fld">文献来源</span> <span class="fld">发表时间</span>
+&nbsp;&nbsp;其余不用勾。<b>「作者」这一列里的署名顺序就是我要的。</b></div></div></div>
+
+<div class="step"><div class="num">10</div><div class="bd"><div class="t">右下角 <span class="btn">导出</span> → 格式选 <span class="fld">Excel</span></div></div></div>
+
+<div class="step"><div class="num">11</div><div class="bd loop"><div class="t">翻到第 2 页，重复第 7—10 步</div>
+<div class="d">200 篇约 4 次，十几分钟。<b>其实导到 100 篇就够统计意义了</b>，不必强求全导。</div></div></div>
+
+<div class="step"><div class="num">12</div><div class="bd done"><div class="t">几个 Excel 拼成一个，发我</div>
+<div class="d">把第 2 个及以后文件的<b>数据行</b>（不含表头）复制粘贴到第 1 个文件末尾即可。
+有重复不要紧，脚本按题名自动去重。剩下的我来做。</div></div></div>
+
+<p class="note"><b>万方 / 维普同理</b>：检索条件选「作者单位」，导出时勾题名与作者，转换脚本三家的格式都能读。<br>
+<b>拿到之后</b>：只剩一件需要你判断的事——给期刊定分值。脚本会把去重后的期刊按发文量排出来，通常就 8–15 种，Excel 里筛选批量填，约 20 分钟。「通讯作者」列可以整列留空。</p>
+</div>

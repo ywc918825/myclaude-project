@@ -1,0 +1,53 @@
+<meta charset="utf-8">
+<style>
+ body{margin:0;background:#fff;font:16px/1.9 "Noto Sans CJK SC","Source Han Sans SC",sans-serif;color:#111}
+ .wrap{width:1000px;padding:26px 30px}
+ h2{font-size:19px;margin:0 0 14px;padding-bottom:8px;border-bottom:2px solid #222}
+ .row{display:flex;gap:18px;margin-bottom:22px}
+ .box{flex:1;border:1px solid #d5d5d5;border-radius:6px;padding:14px 16px}
+ .ok{border-color:#2e7d32;background:#f4faf4}
+ .no{border-color:#c62828;background:#fdf5f5}
+ .tag{font-size:13px;font-weight:700;margin-bottom:8px}
+ .ok .tag{color:#2e7d32} .no .tag{color:#c62828}
+ .s{font-family:"Times New Roman",serif;font-size:17px;line-height:2.1}
+ i{font-style:italic}
+ sub{font-size:.72em;vertical-align:-.28em} sup{font-size:.72em;vertical-align:.42em}
+ .note{font-size:13.5px;color:#555;margin-top:6px}
+ .hd{font-size:14px;color:#666;margin:0 0 16px}
+</style>
+<div class="wrap">
+<h2>论文 3.2 / 3.3 节：变量符号该长什么样</h2>
+<p class="hd">在 Word 里打开稿子，翻到「3.2 多作者积分权重分配模型」和「3.3 动态标签权重模型」，
+对照下面左栏。左边是正确的，右边是我上几轮改坏、现已修复的样子。</p>
+
+<div class="row">
+ <div class="box ok"><div class="tag">✓ 正确（现在应该是这样）</div>
+  <div class="s">式中：<i>S</i><sub>i</sub> 为第 <i>i</i> 作者获得的积分；<i>S</i><sub>total</sub> 为成果标准积分；<i>n</i> 为作者总数。</div>
+  <div class="note">字母倾斜，下标压低半格</div></div>
+ <div class="box no"><div class="tag">✗ 错误（如果看到这样，告诉我）</div>
+  <div class="s">式中：Si 为第 i 作者获得的积分；Stotal 为成果标准积分；n 为作者总数。</div>
+  <div class="note">字母不斜、下标掉到基线上，跟公式对不上</div></div>
+</div>
+
+<div class="row">
+ <div class="box ok"><div class="tag">✓ 正确</div>
+  <div class="s">式中：<i>s&#771;</i><sub>i,u</sub> 为行为 <i>i</i> 经时间衰减与归一化后的积分；<i>W</i><sup>(k)</sup><sub>t,u</sub> 为用户 <i>u</i> 在标签 <i>t</i> 上第 <i>k</i> 个周期的权重；<i>S</i><sub>max,t</sub> 为……；<i>τ</i><sub>now</sub> 为评价时刻。</div>
+  <div class="note">W 同时有上标 (k) 和下标 t,u；希腊字母 τ 也要斜</div></div>
+ <div class="box no"><div class="tag">✗ 错误</div>
+  <div class="s">式中：s&#771;i,u 为行为 i 经时间衰减与归一化后的积分；W(k)t,u 为用户 u 在标签 t 上第 k 个周期的权重；Smax,t 为……；τnow 为评价时刻。</div>
+  <div class="note">全挤成一行普通字，读者分不清哪是下标</div></div>
+</div>
+
+<div class="row">
+ <div class="box ok"><div class="tag">✓ 正确</div>
+  <div class="s">式(5)中 <i>α</i> 取 0.7，各期权重按 <i>α</i>(1 − <i>α</i>)<sup>j</sup> 衰减……权重为 [(1 − <i>α</i>)e<sup>−λ</sup>]<sup>j</sup> ≈ 0.261<sup>j</sup></div>
+  <div class="note">指数 j 和 −λ 要抬高；α、λ 要斜</div></div>
+ <div class="box no"><div class="tag">✗ 错误</div>
+  <div class="s">式(5)中 α 取 0.7，各期权重按 α(1 − α)j 衰减……权重为 [(1 − α)e−λ]j ≈ 0.261j</div>
+  <div class="note">指数掉下来了，0.261j 会被读成"零点二六一乘 j"</div></div>
+</div>
+
+<p class="note" style="font-size:14px;border-top:1px solid #ddd;padding-top:12px">
+ 我已在 XML 层核对过：这三段现在的下标 / 上标 / 斜体数量全部达到或超过原稿。
+ 你这一步只是眼睛扫一遍确认 Word 显示正常，看到左边那样就没问题，30 秒的事。</p>
+</div>
